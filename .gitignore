@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo 
+.env
+venv/
+.env.*
+
+# Flutter
+.build/
+build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+generated_plugin_registrant.dart
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+*.log
+__pypackages__/
