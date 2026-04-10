@@ -13,9 +13,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.post("/", response_model=UserResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-
-    return user_service.create_user(db, user)
+async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    user = await user_service.create_user(db, user)
+    return user
 
 
 @router.get("/", response_model=list[UserResponse])

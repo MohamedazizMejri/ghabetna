@@ -21,6 +21,7 @@ class Utilisateur(Base):
     password = Column(String, nullable=False)
 
 
+    #reset_token = Column(String, nullable=True)
 
     role_id = Column(UUID(as_uuid=True), ForeignKey("role.id"))
 

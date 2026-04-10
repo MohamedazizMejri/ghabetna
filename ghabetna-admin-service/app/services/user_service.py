@@ -4,23 +4,55 @@ from app.schemas.user_schema import UserCreate
 from app.schemas.user_schema import UserUpdate
 from app.models.role import Role
 from sqlalchemy.orm import joinedload
+import uuid
+from fastapi_mail import FastMail, MessageSchema
+from app.core.mail_config import conf
+from passlib.hash import bcrypt
+import random
+import string 
 
+"""def generate_password(length=10):
+    chars = string.ascii_letters + string.digits + "!@#$%"
+    return ''.join(random.choice(chars) for _ in range(length))"""
+def generate_password(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-def create_user(db: Session, user: UserCreate):
-
+async def create_user(db: Session, user: UserCreate):
+    plain_password = generate_password()
+    #token = str(uuid.uuid4())
+    hashed_password = bcrypt.hash(plain_password)
     new_user = Utilisateur(
         nom=user.nom,
         prenom=user.prenom,
         email=user.email,
         numtel=user.numtel,
         cin=user.cin,
-        password=None,
-        role_id=user.role_id
+        #password=hashed_password,
+        role_id=user.role_id,
+        #reset_token=token
     )
+    print("PASSWORD:", plain_password)
+    print("LENGTH:", len(plain_password))
+    new_user.password=hashed_password
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    message = MessageSchema(
+    subject="Your Account Password",
+    recipients=[new_user.email],
+    body=f"""Your Account has been created.
+    Email: {new_user.email}
+    Password :{plain_password}
+    
+    
+    """,
+    subtype="plain"
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)
 
     return new_user
 
@@ -46,12 +78,13 @@ def update_user(db: Session, user_id: str, updated_user: UserCreate):
     return user
 
 def delete_user(db: Session, user_id: str):
-    user = db.query(Utilisateur).filter(Utilisateur.id == user_id).first()
+    user = db.query(Utilisateur).options(joinedload(Utilisateur.role)).filter(Utilisateur.id == user_id).first()
     if not user:
         return None
     db.delete(user)
     db.commit()
     return user
+    #return {"message": "User deleted"}
 
 from app.schemas.user_schema import UserUpdate
 
