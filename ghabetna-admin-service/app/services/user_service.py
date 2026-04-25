@@ -10,6 +10,8 @@ from app.core.mail_config import conf
 from passlib.hash import bcrypt
 import random
 import string 
+from sqlalchemy import case
+
 
 """def generate_password(length=10):
     chars = string.ascii_letters + string.digits + "!@#$%"
@@ -59,7 +61,13 @@ async def create_user(db: Session, user: UserCreate):
 
 def get_users(db: Session):
 
-    return db.query(Utilisateur).options(joinedload(Utilisateur.role)).all()
+    return db.query(Utilisateur).join(Role).options(joinedload(Utilisateur.role)).order_by(
+            case (
+                (Role.type_role == "admin", 1),
+                (Role.type_role == "superviseur", 2),
+                (Role.type_role == "agent", 3),
+                else_=4
+            )).all()
 
 def update_user(db: Session, user_id: str, updated_user: UserCreate):
     user = db.query(Utilisateur).filter(Utilisateur.id == user_id).first()

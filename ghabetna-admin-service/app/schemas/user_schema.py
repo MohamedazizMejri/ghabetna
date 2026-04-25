@@ -23,19 +23,21 @@ class UserResponse(BaseModel):
     nom: str
     prenom: str
     email: str
+    numtel: str | None
+    cin: str | None
     role: RoleResponse
 
     class Config:
         from_attributes = True 
 
 class UserUpdate(BaseModel):
-    nom: Optional[str]
-    prenom: Optional[str]
-    email: Optional[str]
-    numtel: Optional[str]
-    cin: Optional[str]
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    email: Optional[str] = None
+    numtel: Optional[str] = None
+    cin: Optional[str] = None
     #password: Optional[str]
-    role_id: Optional[UUID]
+    role_id: Optional[UUID] = None
 
     class Config:
         from_attributes = True
@@ -45,11 +47,14 @@ class UserLogin(BaseModel):
     password: str
 
 
-class LoginResponse(BaseModel):
+"""class LoginResponse(BaseModel):
     id: UUID
     email: str
     role: str
     
     class Config:
-        from_attributes = True
+        from_attributes = True"""
+class LoginResponse(BaseModel):
+    access_token: str
+    role: str
 

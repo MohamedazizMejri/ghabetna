@@ -24,22 +24,36 @@ class _EditUserScreenState extends State<EditUserScreen> {
   @override
   void initState() {
     super.initState();
-
+    
+    
     nomController = TextEditingController(text: widget.user["nom"]);
     prenomController = TextEditingController(text: widget.user["prenom"]);
     emailController = TextEditingController(text: widget.user["email"]);
     telController = TextEditingController(text: widget.user["numtel"]);
     cinController = TextEditingController(text: widget.user["cin"]);
 
-    selectedRole = widget.user["role_id"];
+    //selectedRole = widget.user["role_id"]?.toString();
 
     loadRoles();
   }
 
   Future<void> loadRoles() async {
     final data = await ApiService.getRoles();
+    final userRoleId = widget.user["role"] != null
+      ? widget.user["role"]["id"].toString()
+      : widget.user["role_id"]?.toString();
+
     setState(() {
       roles = data;
+      selectedRole = roles.any(
+       (r) => r["id"].toString() == userRoleId,
+      )
+        ? userRoleId
+        : null;
+      
+      //selectedRole = widget.user["role_id"]?.toString();
+      //if (!roles.any((r) => r["id"].toString() == selectedRole)) {
+      //selectedRole = roles.isNotEmpty ? roles[0]["id"].toString() : null;}
     });
   }
 
@@ -77,7 +91,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
             DropdownButton<String>(
               isExpanded: true,
-              value: selectedRole,
+              value: roles.any((r) => r["id"].toString() == selectedRole)
+                  ? selectedRole
+                  : null,
+              hint: const Text("Select Role"),
               items: roles.map<DropdownMenuItem<String>>((role) {
                 return DropdownMenuItem<String>(
                   value: role["id"].toString(),
