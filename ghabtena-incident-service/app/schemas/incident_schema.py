@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from uuid import UUID
 
+from typing import Optional
+from enum import Enum
 
 class IncidentCreate(BaseModel):
     description: str
@@ -18,3 +20,17 @@ class IncidentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class IncidentWithLocationResponse(IncidentResponse):
+    latitude: float
+    longitude: float
+
+class IncidentStatus(str, Enum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
+
+
+class IncidentStatusUpdate(BaseModel):
+    status: IncidentStatus
+    comment: Optional[str] = None

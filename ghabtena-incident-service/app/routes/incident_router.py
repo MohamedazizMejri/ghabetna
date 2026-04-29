@@ -7,14 +7,145 @@ from app.services.incident_service import create_incident
 
 from app.schemas.incident_schema import IncidentResponse
 
+
+from typing import List
+from app.services.incident_service import get_all_incidents
+from app.schemas.incident_schema import IncidentResponse
+from app.schemas.incident_schema import IncidentWithLocationResponse
+
+from app.dependencies.auth import get_current_user
+from fastapi import HTTPException
+
+from app.models.incident import Incident
+from sqlalchemy import func
+from geoalchemy2 import Geometry
+from app.services.incident_service import get_incident_with_location
+
+from app.services.incident_service import get_incident_by_id
+from app.services.incident_service import get_incidents_by_status
+from app.services.incident_service import get_pending_incidents
+from app.services.incident_service import get_agent_incidents
+
+
+
+
 router = APIRouter()
 
 
-@router.post("/incidents" ,response_model=IncidentResponse)
+"""@router.post("/incidents" ,response_model=IncidentResponse)
 def create_incident_route(
     data: IncidentCreate,
     db: Session = Depends(get_db)
 ):
     incident = create_incident(db, data)
 
+    return incident"""
+
+
+@router.post("/incidents",response_model=IncidentResponse)
+def create_incident_route(
+    data: IncidentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    print("CURRENT USER:", current_user)
+    if current_user["role"] != "agent":
+        raise HTTPException(status_code=403, detail="Only agents can create incidents")
+
+    incident = create_incident(
+        db,
+        data,
+        agent_id=current_user["user_id"]
+    )
+
     return incident
+
+
+
+@router.get("/incidents", response_model=List[IncidentWithLocationResponse])
+def get_incidents_route(db: Session = Depends(get_db)):
+    incidents = get_all_incidents(db)
+    return incidents
+
+from uuid import UUID
+from app.schemas.incident_schema import IncidentStatusUpdate
+from app.services.incident_service import update_incident_status
+
+
+"""@router.patch("/incidents/{incident_id}/status")
+def update_status_route(
+    incident_id: UUID,
+    data: IncidentStatusUpdate,
+    db: Session = Depends(get_db)
+):
+    incident = update_incident_status(db, incident_id, data)
+
+    return {
+        "id": incident.id,
+        "status": incident.status,
+        "comment": incident.comment,
+        "reviewed_at": incident.reviewed_at
+    }"""
+@router.patch("/incidents/{incident_id}/status")
+def update_status_route(
+    incident_id: UUID,
+    data: IncidentStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] != "superviseur":
+        raise HTTPException(status_code=403, detail="Only supervisors allowed")
+
+    incident = update_incident_status(
+        db,
+        incident_id,
+        data,
+        supervisor_id=current_user["user_id"]
+    )
+    result = get_incident_with_location(db, incident_id)
+
+    return {
+        "id": result.id,
+        "reference_code": result.reference_code,
+        "description": result.description,
+        "type_code": result.type_code,
+        "latitude": result.latitude,
+        "longitude": result.longitude,
+    }
+
+@router.get("/incidents/{incident_id}")
+def get_incident_route(
+    incident_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    return get_incident_by_id(db, incident_id)
+
+@router.get("/incidents")
+def get_incidents_route(
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+
+    if status:
+        return get_incidents_by_status(db, status)
+
+    return get_all_incidents(db)
+
+@router.get("/incidents/pending")
+def get_pending_route(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] != "superviseur":
+        raise HTTPException(status_code=403, detail="Only supervisors allowed")
+
+    return get_pending_incidents(db)
+
+@router.get("/incidents/my")
+def get_my_incidents_route(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    return get_agent_incidents(db, current_user["user_id"])

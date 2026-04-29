@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'dashboard_screen.dart';
 
+import 'agent/agent_screen.dart';
+import 'supervisor/supervisor_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -32,9 +35,21 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (_) => DashboardScreen(user: user)),
         );
+      } else if (role == "supervisor") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => SupervisorScreen(user: user)),
+        );
+
+      } else if (role == "agent") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => AgentScreen(user: user)),
+        );
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Access denied")),
+          const SnackBar(content: Text("Unknown role")),
         );
       }
 
