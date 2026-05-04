@@ -7,3 +7,4 @@ geoalchemy2
 shapely
 pydantic
 python-jose[cryptography]
+python-multipart

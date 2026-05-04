@@ -18,6 +18,9 @@ from fastapi import HTTPException
 
 from app.schemas.incident_schema import IncidentStatusUpdate
 
+from app.models.incident_type import IncidentType
+
+
 
 def generate_reference():
     return f"REF-{uuid.uuid4().hex[:8]}"
@@ -50,9 +53,14 @@ def get_all_incidents(db: Session):
         Incident.id,
         Incident.reference_code,
         Incident.description,
+        Incident.status,
+        Incident.image_url,
         Incident.type_code,
+        IncidentType.severity,
         func.ST_Y(func.cast(Incident.location, Geometry)).label("latitude"),
         func.ST_X(func.cast(Incident.location, Geometry)).label("longitude"),
+    ).join(
+        IncidentType, Incident.type_code == IncidentType.code
     ).all()
 
     return [
@@ -60,7 +68,10 @@ def get_all_incidents(db: Session):
             "id": r.id,
             "reference_code": r.reference_code,
             "description": r.description,
+            "status": r.status,
+            "image_url": r.image_url,
             "type_code": r.type_code,
+            "severity": r.severity,
             "latitude": r.latitude,
             "longitude": r.longitude,
         }
@@ -155,3 +166,7 @@ def get_agent_incidents(db, agent_id: str):
         func.ST_Y(Incident.location.cast(Geometry)).label("latitude"),
         func.ST_X(Incident.location.cast(Geometry)).label("longitude"),
     ).filter(Incident.agent_id == agent_id).all()
+
+
+def get_incident_types(db):
+    return db.query(IncidentType).all()

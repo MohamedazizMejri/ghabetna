@@ -26,6 +26,15 @@ from app.services.incident_service import get_incidents_by_status
 from app.services.incident_service import get_pending_incidents
 from app.services.incident_service import get_agent_incidents
 
+from fastapi import UploadFile, File, Form
+import uuid
+import os
+
+from app.models.incident_type import IncidentType
+
+from app.services.incident_service import get_incident_types
+
+
 
 
 
@@ -42,7 +51,7 @@ def create_incident_route(
     return incident"""
 
 
-@router.post("/incidents",response_model=IncidentResponse)
+"""@router.post("/incidents",response_model=IncidentResponse)
 def create_incident_route(
     data: IncidentCreate,
     db: Session = Depends(get_db),
@@ -51,6 +60,48 @@ def create_incident_route(
     print("CURRENT USER:", current_user)
     if current_user["role"] != "agent":
         raise HTTPException(status_code=403, detail="Only agents can create incidents")
+
+    incident = create_incident(
+        db,
+        data,
+        agent_id=current_user["user_id"]
+    )
+
+    return incident"""
+
+@router.post("/incidents", response_model=IncidentResponse)
+def create_incident_route(
+    description: str = Form(...),
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    type_code: str = Form(...),
+    image: UploadFile = File(...),   
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    print("CURRENT USER:", current_user)
+
+    if current_user["role"] != "agent":
+        raise HTTPException(status_code=403, detail="Only agents can create incidents")
+
+    #  Generate unique filename
+    filename = f"{uuid.uuid4()}_{image.filename}"
+    file_path = os.path.join("uploads", filename)
+
+    #  Save file
+    with open(file_path, "wb") as buffer:
+        buffer.write(image.file.read())
+
+    #  Build data (same structure as before)
+    class Data:
+        pass
+
+    data = Data()
+    data.description = description
+    data.latitude = latitude
+    data.longitude = longitude
+    data.type_code = type_code
+    data.image_url = file_path
 
     incident = create_incident(
         db,
@@ -149,3 +200,16 @@ def get_my_incidents_route(
     current_user: dict = Depends(get_current_user)
 ):
     return get_agent_incidents(db, current_user["user_id"])
+
+@router.get("/incident-types")
+def get_types(db: Session = Depends(get_db)):
+    types = get_incident_types(db)
+
+    return [
+        {
+            "code": t.code,
+            "label": t.label,
+            "severity": t.severity
+        }
+        for t in types
+    ]

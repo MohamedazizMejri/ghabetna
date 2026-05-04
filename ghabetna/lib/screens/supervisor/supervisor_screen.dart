@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'supervisor_map_screen.dart';
 
 class SupervisorScreen extends StatelessWidget {
   final Map user;
@@ -8,53 +9,61 @@ class SupervisorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Supervisor Interface"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+
+      ///  SIDEBAR
+      drawer: Drawer(
+        child: ListView(
           children: [
 
-            Text("Welcome Supervisor: ${user["email"]}"),
-
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: () {
-                // TODO: show incidents list
-              },
-              child: const Text("View Incidents"),
+            /// HEADER
+            UserAccountsDrawerHeader(
+              accountName: const Text("Supervisor"),
+              accountEmail: Text(user["email"] ?? ""),
             ),
 
-            const SizedBox(height: 10),
-
-            ElevatedButton(
-              onPressed: () {
-                // TODO: show map
+            /// MAP
+            ListTile(
+              leading: const Icon(Icons.map),
+              title: const Text("Map"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SupervisorMapScreen(),
+                  ),
+                );
               },
-              child: const Text("View Map"),
             ),
 
-            const SizedBox(height: 10),
-
-            ElevatedButton(
-              onPressed: () {
-                // TODO: show agents
-              },
-              child: const Text("Agents List"),
+            /// INCIDENTS LIST (later)
+            ListTile(
+              leading: const Icon(Icons.list),
+              title: const Text("Incidents"),
+              onTap: () {},
             ),
 
-            const SizedBox(height: 10),
+            /// LOGOUT 
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text("Logout"),
+              onTap: () {
 
-            ElevatedButton(
-              onPressed: () {
-                // TODO: profile
+                //  clear token
+                // ApiService.token = null;
+
+                Navigator.pushReplacementNamed(context, "/login");
               },
-              child: const Text("Profile"),
             ),
           ],
         ),
+      ),
+
+      appBar: AppBar(
+        title: const Text("Supervisor Dashboard"),
+      ),
+
+      body: const Center(
+        child: Text("Welcome Supervisor"),
       ),
     );
   }

@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (_) => DashboardScreen(user: user)),
         );
-      } else if (role == "supervisor") {
+      } else if (role == "superviseur") {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => SupervisorScreen(user: user)),
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
 
-              const Text("Admin Login", style: TextStyle(fontSize: 24)),
+              const Text("Login", style: TextStyle(fontSize: 24)),
 
               const SizedBox(height: 20),
 
