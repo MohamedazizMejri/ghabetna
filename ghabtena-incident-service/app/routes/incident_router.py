@@ -92,6 +92,7 @@ def create_incident_route(
     with open(file_path, "wb") as buffer:
         buffer.write(image.file.read())
 
+
     #  Build data (same structure as before)
     class Data:
         pass
@@ -101,7 +102,7 @@ def create_incident_route(
     data.latitude = latitude
     data.longitude = longitude
     data.type_code = type_code
-    data.image_url = file_path
+    data.image_url = f"/uploads/{filename}"
 
     incident = create_incident(
         db,
@@ -113,10 +114,10 @@ def create_incident_route(
 
 
 
-@router.get("/incidents", response_model=List[IncidentWithLocationResponse])
+"""@router.get("/incidents", response_model=List[IncidentWithLocationResponse])
 def get_incidents_route(db: Session = Depends(get_db)):
     incidents = get_all_incidents(db)
-    return incidents
+    return incidents"""
 
 from uuid import UUID
 from app.schemas.incident_schema import IncidentStatusUpdate
@@ -172,7 +173,7 @@ def get_incident_route(
 ):
     return get_incident_by_id(db, incident_id)
 
-@router.get("/incidents")
+@router.get("/incidents",response_model=List[IncidentWithLocationResponse])
 def get_incidents_route(
     status: str | None = None,
     db: Session = Depends(get_db),

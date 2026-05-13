@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'supervisor_map_screen.dart';
+import 'supervisor_incidents_screen.dart';
 
 class SupervisorScreen extends StatelessWidget {
   final Map user;
@@ -39,7 +40,14 @@ class SupervisorScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.list),
               title: const Text("Incidents"),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SupervisorIncidentsScreen(),
+                  ),
+                );
+              },
             ),
 
             /// LOGOUT 

@@ -21,9 +21,22 @@ class IncidentResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class IncidentWithLocationResponse(IncidentResponse):
+"""class IncidentWithLocationResponse(IncidentResponse):
+    latitude: float
+    longitude: float"""
+class IncidentWithLocationResponse(BaseModel):
+    id: UUID
+    reference_code: str
+    description: str
+    status: Optional[str] = None
+    image_url: Optional[str] = None
+    type_code: str
+    severity: int
     latitude: float
     longitude: float
+
+    class Config:
+        from_attributes = True
 
 class IncidentStatus(str, Enum):
     pending = "pending"
