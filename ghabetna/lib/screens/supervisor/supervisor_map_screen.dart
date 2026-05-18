@@ -79,7 +79,7 @@ void showIncidentDialog(Map incident) {
           ///  IMAGE
           if (incident["image_url"] != null)
             Image.network(
-              "${ApiService.incidentBaseUrl}${incident["image_url"]}",
+              "${ApiService.baseUrl}${incident["image_url"]}",
               height: 150,
             ),
 

@@ -4,7 +4,7 @@ import 'api_service.dart';
 
 class IncidentService {
 
-  static String get baseUrl => ApiService.incidentBaseUrl;
+  static String get baseUrl => ApiService.baseUrl; //static String get baseUrl => ApiService.incidentBaseUrl;
 
   static Future<List<dynamic>> getMyIncidents() async {
     final response = await http.get(
@@ -68,7 +68,7 @@ class IncidentService {
 
 static Future<List<dynamic>> getAllIncidents() async {
   final response = await http.get(
-    Uri.parse("${ApiService.incidentBaseUrl}/incidents"),
+    Uri.parse("${ApiService.baseUrl}/incidents"), //Uri.parse("${ApiService.incidentBaseUrl}/incidents"),
     headers: ApiService.headers,
   );
 
@@ -86,7 +86,7 @@ static Future<void> updateIncidentStatus(
   String? comment,
 ) async {
   final response = await http.patch(
-    Uri.parse("${ApiService.incidentBaseUrl}/incidents/$id/status"),
+    Uri.parse("${ApiService.baseUrl}/incidents/$id/status"), //Uri.parse("${ApiService.incidentBaseUrl}/incidents/$id/status"),
     headers: ApiService.headers,
     body: jsonEncode({
       "status": status,

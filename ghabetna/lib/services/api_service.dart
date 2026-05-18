@@ -12,22 +12,22 @@ class ApiService {
     }
   }*/
   // AUTH + ADMIN SERVICE
-  static String get authBaseUrl {
+  static String get baseUrl {      //authBaseUrl
     if (kIsWeb) {
-      return "http://127.0.0.1:8000";
+      return "http://127.0.0.1:9000";
     } else {
-      return  "http://192.168.1.25:8000";//http://192.168.1.17:8000;//http://10.0.2.2:8000
+      return  "http://192.168.1.25:9000";//http://192.168.1.17:8000;//http://10.0.2.2:8000
     }
   }
 
   // INCIDENT SERVICE
-  static String get incidentBaseUrl {
+  /*static String get incidentBaseUrl {
     if (kIsWeb) {
       return "http://127.0.0.1:8001";
     } else {
       return "http://192.168.1.25:8001" ;//http://192.168.1.17:8001;//http://10.0.2.2:8001
     }
-  }
+  }*/
 
   static String? token;
   static Map<String, String> get headers => {
@@ -56,7 +56,7 @@ class ApiService {
   static Future<Map<String, dynamic>> login(String email, String password) async {
 
     final response = await http.post(
-      Uri.parse("$authBaseUrl/auth/login"),
+      Uri.parse("$baseUrl/auth/login"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "email": email,
@@ -77,7 +77,7 @@ class ApiService {
   }
 
   static Future<List<dynamic>> getRoles() async {
-    final response = await http.get(Uri.parse("$authBaseUrl/roles/"));
+    final response = await http.get(Uri.parse("$baseUrl/roles/"));
 
     print(response.body);
 
@@ -90,7 +90,7 @@ class ApiService {
 
   static Future<void> createUser(Map data) async {
     final response = await http.post(
-      Uri.parse("$authBaseUrl/users/"),
+      Uri.parse("$baseUrl/users/"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(data),
     );
@@ -103,7 +103,7 @@ class ApiService {
 static Future<void> createForest(Map data) async {
 
   final response = await http.post(
-    Uri.parse("$authBaseUrl/forests/"),
+    Uri.parse("$baseUrl/forests/"),
     headers: {"Content-Type": "application/json"},
     body: jsonEncode(data),
   );
@@ -117,7 +117,7 @@ static Future<void> createForest(Map data) async {
 static Future<List<dynamic>> getForests() async {
 
   final response = await http.get(
-    Uri.parse("$authBaseUrl/forests/")
+    Uri.parse("$baseUrl/forests/")
   );
 
   if (response.statusCode == 200) {
@@ -128,7 +128,7 @@ static Future<List<dynamic>> getForests() async {
 }
 
 static Future<List<dynamic>> getSupervisors() async {
-  final response = await http.get(Uri.parse("$authBaseUrl/users/superviseurs/"));
+  final response = await http.get(Uri.parse("$baseUrl/users/superviseurs/"));
 
   if (response.statusCode == 200) {
     return jsonDecode(response.body);
@@ -151,7 +151,7 @@ static Future<List<dynamic>> getSupervisors() async {
 static Future<void> createPartition(Map<String, dynamic> data) async {
   try {
     final response = await http.post(
-      Uri.parse("$authBaseUrl/partitions/"),
+      Uri.parse("$baseUrl/partitions/"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(data),
     );
@@ -170,7 +170,7 @@ static Future<void> createPartition(Map<String, dynamic> data) async {
 }
 
 static Future<List<dynamic>> getAgents() async {
-  final response = await http.get(Uri.parse("$authBaseUrl/users/agents/"));
+  final response = await http.get(Uri.parse("$baseUrl/users/agents/"));
 
   if (response.statusCode == 200) {
     return jsonDecode(response.body);
@@ -181,7 +181,7 @@ static Future<List<dynamic>> getAgents() async {
 
 static Future<List<dynamic>> getPartitions() async {
   final response = await http.get(
-    Uri.parse("$authBaseUrl/partitions/")
+    Uri.parse("$baseUrl/partitions/")
   );
 
   if (response.statusCode == 200) {
@@ -193,7 +193,7 @@ static Future<List<dynamic>> getPartitions() async {
 
 static Future<void> assignSupervisor(String forestId, String supervisorId) async {
   final response = await http.put(
-    Uri.parse("$authBaseUrl/forests/$forestId/assign-supervisor?supervisor_id=$supervisorId"),
+    Uri.parse("$baseUrl/forests/$forestId/assign-supervisor?supervisor_id=$supervisorId"),
   );
 
   if (response.statusCode != 200) {
@@ -203,7 +203,7 @@ static Future<void> assignSupervisor(String forestId, String supervisorId) async
 
 static Future<void> assignAgent(String partitionId, String agentId) async {
   final response = await http.put(
-    Uri.parse("$authBaseUrl/partitions/$partitionId/assign-agent?agent_id=$agentId"),
+    Uri.parse("$baseUrl/partitions/$partitionId/assign-agent?agent_id=$agentId"),
   );
 
   if (response.statusCode != 200) {
@@ -212,7 +212,7 @@ static Future<void> assignAgent(String partitionId, String agentId) async {
 }
 
 static Future<Map<String, dynamic>> getStats() async {
-  final response = await http.get(Uri.parse("$authBaseUrl/stats/"));
+  final response = await http.get(Uri.parse("$baseUrl/stats/"));
 
   if (response.statusCode == 200) {
     return jsonDecode(response.body);
@@ -223,7 +223,7 @@ static Future<Map<String, dynamic>> getStats() async {
 
 static Future<List> getUsers() async {
   final response = await http.get(
-    Uri.parse("$authBaseUrl/users/"),
+    Uri.parse("$baseUrl/users/"),
   );
 
   if (response.statusCode == 200) {
@@ -235,7 +235,7 @@ static Future<List> getUsers() async {
 
 static Future<void> deleteUser(String id) async {
   final response = await http.delete(
-    Uri.parse("$authBaseUrl/users/$id"),
+    Uri.parse("$baseUrl/users/$id"),
   );
 
   if (response.statusCode != 200) {
@@ -245,7 +245,7 @@ static Future<void> deleteUser(String id) async {
 
 static Future<void> updateUser(String id, Map data) async {
   final response = await http.patch(
-    Uri.parse("$authBaseUrl/users/$id"),
+    Uri.parse("$baseUrl/users/$id"),
     headers: {"Content-Type": "application/json"},
     body: jsonEncode(data),
   );
