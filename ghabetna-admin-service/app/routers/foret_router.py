@@ -23,6 +23,9 @@ from app.services import foret_service
 from sqlalchemy import func
 import json
 
+import json
+from app.core.redis_client import get_redis
+
 router = APIRouter(prefix="/forests", tags=["Forests"])
 
 
@@ -88,6 +91,16 @@ def assign_supervisor(
     # assign supervisor
     forest.supervised_by = supervisor_id
     db.commit()
+    # Publish forest_assigned event
+    try:
+        r = get_redis()
+        r.publish("forest_assigned", json.dumps({
+            "supervisor_id": str(supervisor_id),
+            "forest_id": str(forest_id),
+            "forest_nom": forest.nom,
+        }))
+    except Exception as e:
+        print(f"[Redis] publish failed: {e}")
 
     #  convert geom to GeoJSON
     result = db.query(

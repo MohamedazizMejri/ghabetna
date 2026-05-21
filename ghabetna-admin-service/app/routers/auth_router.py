@@ -54,7 +54,8 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 
     return {
         "access_token": token,
-        "role": user.role.type_role
+        "role": user.role.type_role,
+        "id": str(user.id),
     }
 """@router.post("/set-password")
 def set_password(data: SetPasswordRequest, db: Session = Depends(get_db)):
@@ -81,7 +82,7 @@ def set_password(data: SetPasswordRequest, db: Session = Depends(get_db)):
 
     return {"message": "Password set successfully"}"""
 
-@router.post("/change-password")
+"""@router.post("/change-password")
 def change_password(data: ChangePasswordRequest, db: Session = Depends(get_db)):
 
     user = db.query(Utilisateur).filter(Utilisateur.id == data.user_id).first()
@@ -92,4 +93,4 @@ def change_password(data: ChangePasswordRequest, db: Session = Depends(get_db)):
     user.password = bcrypt.hash(data.new_password)
     db.commit()
 
-    return {"message": "Password updated"}
+    return {"message": "Password updated"}"""

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'supervisor_map_screen.dart';
 import 'supervisor_incidents_screen.dart';
 
+import 'supervisor_profile_screen.dart';
+
 class SupervisorScreen extends StatelessWidget {
   final Map user;
 
@@ -60,6 +62,19 @@ class SupervisorScreen extends StatelessWidget {
                 // ApiService.token = null;
 
                 Navigator.pushReplacementNamed(context, "/login");
+              },
+            ),
+            //profile
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text("My Profile"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SupervisorProfileScreen(user: user),
+                  ),
+                );
               },
             ),
           ],

@@ -228,3 +228,18 @@ async def uploads_proxy(path: str, request: Request = None):
     target_url = f"{INCIDENT_SERVICE}/uploads/{path}"
 
     return await proxy_request(request, target_url)
+
+# ==========================================
+# PROFILE ROUTES (incident-service)
+# ==========================================
+
+@app.api_route("/profile", methods=["GET", "PATCH"])
+@app.api_route(
+    "/profile/{path:path}",
+    methods=["GET", "PATCH"]
+)
+async def profile_proxy(path: str = "", request: Request = None):
+    target_url = f"{INCIDENT_SERVICE}/profile"
+    if path:
+        target_url += f"/{path}"
+    return await proxy_request(request, target_url)

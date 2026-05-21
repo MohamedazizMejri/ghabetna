@@ -12,6 +12,9 @@ import random
 import string 
 from sqlalchemy import case
 
+import json
+from app.core.redis_client import get_redis
+
 
 """def generate_password(length=10):
     chars = string.ascii_letters + string.digits + "!@#$%"
@@ -83,6 +86,20 @@ def update_user(db: Session, user_id: str, updated_user: UserCreate):
 
     db.commit()
     db.refresh(user)
+    # Publish user_updated event to Redis
+    try:
+        r = get_redis()
+        r.publish("user_updated", json.dumps({
+            "user_id": str(user.id),
+            "nom": user.nom,
+            "prenom": user.prenom,
+            "email": user.email,
+            "numtel": user.numtel,
+            "cin": user.cin,
+            "role": user.role.type_role if user.role else None,
+        }))
+    except Exception as e:
+        print(f"[Redis] publish failed: {e}")
     return user
 
 def delete_user(db: Session, user_id: str):
@@ -106,6 +123,21 @@ def update_user_partial(db: Session, user_id: str, user_update: UserUpdate):
 
     db.commit()
     db.refresh(user)
+    try:
+        r = get_redis()
+        # Reload role relationship before publishing
+        db.refresh(user)
+        r.publish("user_updated", json.dumps({
+            "user_id": str(user.id),
+            "nom": user.nom,
+            "prenom": user.prenom,
+            "email": user.email,
+            "numtel": user.numtel,
+            "cin": user.cin,
+            "role": user.role.type_role if user.role else None,
+        }))
+    except Exception as e:
+        print(f"[Redis] publish failed: {e}")
     return user
 
 def get_agents(db: Session):

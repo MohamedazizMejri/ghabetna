@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'my_incidents_screen.dart';
-import 'create_incident_screen.dart'; // create this next
+import 'create_incident_screen.dart'; 
+
+import 'agent_profile_screen.dart'; 
 
 class AgentScreen extends StatelessWidget {
   final Map user;
@@ -100,13 +102,20 @@ class AgentScreen extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            ///  Profile (optional)
+            ///  Profile 
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.person),
                 label: const Text("Profile"),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AgentProfileScreen(user: user),
+                    ),
+                  );
+                },
               ),
             ),
           ],

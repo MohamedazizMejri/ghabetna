@@ -57,4 +57,5 @@ class UserLogin(BaseModel):
 class LoginResponse(BaseModel):
     access_token: str
     role: str
+    id: str
 

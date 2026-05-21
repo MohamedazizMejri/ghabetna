@@ -30,6 +30,10 @@ class ApiService {
   }*/
 
   static String? token;
+  
+  static String? userId;
+  static String? userRole;
+
   static Map<String, String> get headers => {
   "Content-Type": "application/json",
   "Authorization": "Bearer $token",
@@ -68,6 +72,9 @@ class ApiService {
       final data = jsonDecode(response.body);
 
       token = data["access_token"]; // ✅ STORE TOKEN HERE
+
+      userId = data["id"] ?? data["user_id"];
+      userRole = data["role"];
 
       return data;
     } else {
@@ -252,6 +259,67 @@ static Future<void> updateUser(String id, Map data) async {
 
   if (response.statusCode != 200) {
     throw Exception("Failed to update user");
+  }
+}
+
+// ─── PROFILE ───────────────────────────────────────────────
+
+static Future<Map<String, dynamic>> getMyProfile() async {
+  final response = await http.get(
+    Uri.parse("$baseUrl/profile/me"),
+    headers: headers,
+  );
+  if (response.statusCode == 200) {
+    return Map<String, dynamic>.from(jsonDecode(response.body));
+  } else if (response.statusCode == 404) {
+    // Cache empty — trigger bootstrap first
+    throw Exception("PROFILE_NOT_CACHED");
+  } else {
+    throw Exception("Failed to load profile: ${response.body}");
+  }
+}
+
+static Future<List<dynamic>> getMyParcelles() async {
+  final response = await http.get(
+    Uri.parse("$baseUrl/profile/me/parcelles"),
+    headers: headers,
+  );
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+  return [];
+}
+
+static Future<List<dynamic>> getMyForests() async {
+  final response = await http.get(
+    Uri.parse("$baseUrl/profile/me/forests"),
+    headers: headers,
+  );
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+  return [];
+}
+
+static Future<void> updateMyProfile(Map<String, dynamic> data) async {
+  final response = await http.patch(
+    Uri.parse("$baseUrl/profile/me"),
+    headers: headers,
+    body: jsonEncode(data),
+  );
+  if (response.statusCode != 200) {
+    throw Exception("Failed to update profile");
+  }
+}
+
+static Future<void> syncUserCache(String userId) async {
+  // Asks admin-service to write the user to Redis cache
+  final response = await http.get(
+    Uri.parse("$baseUrl/users/$userId/cache-sync"),
+    headers: headers,
+  );
+  if (response.statusCode != 200) {
+    print("Cache sync failed: ${response.body}");
   }
 }
 

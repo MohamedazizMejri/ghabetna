@@ -7,6 +7,9 @@ from app.models.partition import Partition
 from sqlalchemy import func
 import json
 
+import json
+from app.core.redis_client import get_redis
+
 
 from app.utils.deps import get_db
 from app.schemas.partition_schema import (
@@ -97,6 +100,16 @@ def assign_agent(
     # assign agent
     partition.agent_id = agent_id
     db.commit()
+    # Publish partition_assigned event
+    try:
+        r = get_redis()
+        r.publish("partition_assigned", json.dumps({
+            "agent_id": str(agent_id),
+            "partition_id": str(partition_id),
+            "partition_nom": partition.nom,
+        }))
+    except Exception as e:
+        print(f"[Redis] publish failed: {e}")
 
     #  convert geom to GeoJSON
     result = db.query(
