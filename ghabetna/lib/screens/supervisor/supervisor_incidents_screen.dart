@@ -91,12 +91,14 @@ class _SupervisorIncidentsScreenState
                   DataColumn(label: Text("Type")),
                   DataColumn(label: Text("Severity")),
                   DataColumn(label: Text("Status")),
+                  DataColumn(label: Text("Forest")),       // 
+                  DataColumn(label: Text("Partition")),  //
                   DataColumn(label: Text("Image")),
                   DataColumn(label: Text("Actions")),
                 ],
                 rows: incidents.map((incident) {
 
-                  return DataRow(cells: [
+                    return DataRow(cells: [
 
                     /// Reference
                     DataCell(Text(incident["reference_code"])),
@@ -129,6 +131,21 @@ class _SupervisorIncidentsScreenState
                                   ? Colors.red
                                   : Colors.orange,
                         ),
+                      ),
+                    ),
+                    /// Forest
+                    DataCell(
+                      Text(
+                        incident["foret_nom"] ?? "—",
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+
+                    /// Partition
+                    DataCell(
+                      Text(
+                        incident["parcelle_nom"] ?? "—",
+                        style: const TextStyle(fontSize: 13),
                       ),
                     ),
 

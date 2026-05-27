@@ -10,6 +10,11 @@ import json
 import json
 from app.core.redis_client import get_redis
 
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import func, text
+from app.utils.deps import get_db
+
 
 from app.utils.deps import get_db
 from app.schemas.partition_schema import (
@@ -39,6 +44,35 @@ def get_partitions_route(db: Session = Depends(get_db)):
 
     return get_partitions(db)
 
+# which partition and which forest the incident is in 
+@router.get("/lookup")
+def lookup_partition_by_point(
+    lat: float = Query(...),
+    lng: float = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Returns the partition + forest that contains the given GPS point."""
+    result = db.execute(text("""
+        SELECT p.id AS parcelle_id, p.nom AS parcelle_nom,
+               f.id AS foret_id,   f.nom AS foret_nom
+        FROM "partition" p
+        JOIN foret f ON f.id = p.foret_id
+        WHERE ST_Within(
+            ST_SetSRID(ST_MakePoint(:lng, :lat), 4326),
+            p.geom
+        )
+        LIMIT 1
+    """), {"lat": lat, "lng": lng}).fetchone()
+
+    if not result:
+        return {"parcelle_id": None, "parcelle_nom": None, "foret_id": None, "foret_nom": None}
+
+    return {
+        "parcelle_id": str(result.parcelle_id),
+        "parcelle_nom": result.parcelle_nom,
+        "foret_id": str(result.foret_id),
+        "foret_nom": result.foret_nom,
+    }
 
 """@router.patch("/{partition_id}", response_model=PartitionResponse)
 def update_partition(
@@ -129,3 +163,4 @@ def assign_agent(
         "foret_id": result.foret_id,
         "agent_id": result.agent_id
     }
+

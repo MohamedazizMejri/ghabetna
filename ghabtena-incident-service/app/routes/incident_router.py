@@ -35,7 +35,8 @@ from app.models.incident_type import IncidentType
 from app.services.incident_service import get_incident_types
 
 
-
+from app.schemas.incident_schema import IncidentDetailResponse
+from app.services.incident_service import get_incident_details
 
 
 router = APIRouter()
@@ -164,6 +165,22 @@ def update_status_route(
         "latitude": result.latitude,
         "longitude": result.longitude,
     }
+
+#you can delete this later incident details
+@router.get("/incidents/{incident_id}/details",
+            response_model=IncidentDetailResponse)
+def get_incident_details_route(
+    incident_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user["role"] != "superviseur":
+        raise HTTPException(
+            status_code=403,
+            detail="Only supervisors can view incident details"
+        )
+    return get_incident_details(db, incident_id)
+
 
 @router.get("/incidents/{incident_id}")
 def get_incident_route(

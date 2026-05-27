@@ -34,6 +34,8 @@ class IncidentWithLocationResponse(BaseModel):
     severity: int
     latitude: float
     longitude: float
+    foret_nom: Optional[str] = None      # 
+    parcelle_nom: Optional[str] = None   # 
 
     class Config:
         from_attributes = True
@@ -47,3 +49,30 @@ class IncidentStatus(str, Enum):
 class IncidentStatusUpdate(BaseModel):
     status: IncidentStatus
     comment: Optional[str] = None
+
+#you can delete this later IncidentDetailResponse
+
+class IncidentDetailResponse(BaseModel):
+
+    id: UUID
+    reference_code: str
+    description: str
+    type_code: str
+    severity: int
+    status: Optional[str] = None
+    comment: Optional[str] = None
+    image_url: Optional[str] = None
+    latitude: float
+    longitude: float
+    agent_id: Optional[UUID] = None
+    created_at: Optional[str] = None
+    reviewed_at: Optional[str] = None
+
+    # 
+    foret_id: Optional[UUID] = None
+    foret_nom: Optional[str] = None
+    parcelle_id: Optional[UUID] = None
+    parcelle_nom: Optional[str] = None
+
+    class Config:
+        from_attributes = True
