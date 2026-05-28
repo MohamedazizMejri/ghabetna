@@ -38,6 +38,9 @@ from app.services.incident_service import get_incident_types
 from app.schemas.incident_schema import IncidentDetailResponse
 from app.services.incident_service import get_incident_details
 
+from app.schemas.incident_schema import AgentIncidentResponse  
+
+
 
 router = APIRouter()
 
@@ -182,6 +185,27 @@ def get_incident_details_route(
     return get_incident_details(db, incident_id)
 
 
+@router.get("/incidents/my",response_model=list[AgentIncidentResponse])
+def get_my_incidents_route(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    #return get_agent_incidents(db, current_user["user_id"])
+    rows = get_agent_incidents(db, current_user["user_id"])
+    return [
+        {
+            "id": r.id,
+            "reference_code": r.reference_code,
+            "description": r.description,
+            "type_code": r.type_code,
+            "status": r.status.value if r.status else None,
+            "created_at": r.created_at.isoformat() if r.created_at else None,  
+            "latitude": r.latitude,
+            "longitude": r.longitude,
+        }
+        for r in rows
+    ]
+
 @router.get("/incidents/{incident_id}")
 def get_incident_route(
     incident_id: UUID,
@@ -212,12 +236,7 @@ def get_pending_route(
 
     return get_pending_incidents(db)
 
-@router.get("/incidents/my")
-def get_my_incidents_route(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    return get_agent_incidents(db, current_user["user_id"])
+
 
 @router.get("/incident-types")
 def get_types(db: Session = Depends(get_db)):

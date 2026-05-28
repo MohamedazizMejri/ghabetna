@@ -112,7 +112,7 @@ def _subscriber_loop():
     """Blocking loop. Runs in a daemon thread."""
     r = redis.Redis.from_url(REDIS_URL, decode_responses=True)
     pubsub = r.pubsub()
-    pubsub.subscribe("user_updated", "partition_assigned", "forest_assigned")
+    pubsub.subscribe("user_updated", "partition_assigned", "forest_assigned", "spatial_changed")
 
     print("[Redis Subscriber] Listening on channels: user_updated, partition_assigned, forest_assigned")
 
@@ -133,6 +133,8 @@ def _subscriber_loop():
                 _handle_partition_assigned(r, data)
             elif channel == "forest_assigned":
                 _handle_forest_assigned(r, data)
+            elif channel == "spatial_changed":      
+                _handle_spatial_changed(r, data)
         except Exception as e:
             print(f"[Redis Subscriber] Error handling {channel}: {e}")
 
@@ -141,3 +143,24 @@ def start_subscriber():
     """Call this once at app startup."""
     t = threading.Thread(target=_subscriber_loop, daemon=True)
     t.start()
+
+def _handle_spatial_changed(r: redis.Redis, data: dict):
+    """
+    A partition or forest was created, updated, or deleted in the admin service.
+    We must:
+      1. Delete all spatial:* cache keys (the GPS→partition/forest lookup cache).
+      2. Delete all incident:*:details cache keys (they embed foret_nom/parcelle_nom).
+    This forces a fresh lookup on next request, which will now return the
+    correct partition name (or forest-only, or nothing) for every incident.
+    """
+    # Delete all spatial lookup caches (pattern scan — safe on small datasets)
+    spatial_keys = r.keys("spatial:*")
+    if spatial_keys:
+        r.delete(*spatial_keys)
+        print(f"[Redis Subscriber] Deleted {len(spatial_keys)} spatial cache keys")
+
+    # Delete all incident detail caches (they embed the now-stale names)
+    detail_keys = r.keys("incident:*:details")
+    if detail_keys:
+        r.delete(*detail_keys)
+        print(f"[Redis Subscriber] Deleted {len(detail_keys)} incident detail caches")

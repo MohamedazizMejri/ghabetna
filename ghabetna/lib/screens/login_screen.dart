@@ -77,7 +77,11 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(                // handles small screens / keyboard
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: screenHeight - 80),
+            constraints: BoxConstraints(
+                minHeight: screenHeight
+                  - MediaQuery.of(context).padding.top     // status bar
+                  - MediaQuery.of(context).padding.bottom, // nav bar / home indicator
+              ),
             child: IntrinsicHeight(
               child: Column(
                 children: [

@@ -4,6 +4,9 @@ from uuid import UUID
 from typing import Optional
 from enum import Enum
 
+from datetime import datetime
+
+
 class IncidentCreate(BaseModel):
     description: str
     latitude: float
@@ -73,6 +76,20 @@ class IncidentDetailResponse(BaseModel):
     foret_nom: Optional[str] = None
     parcelle_id: Optional[UUID] = None
     parcelle_nom: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AgentIncidentResponse(BaseModel):
+    id: UUID
+    reference_code: str
+    description: str
+    type_code: str
+    status: Optional[str] = None
+    created_at: Optional[datetime] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
     class Config:
         from_attributes = True

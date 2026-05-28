@@ -179,6 +179,7 @@ def get_agent_incidents(db, agent_id: str):
         Incident.description,
         Incident.type_code,
         Incident.status,
+        Incident.created_at,
         func.ST_Y(Incident.location.cast(Geometry)).label("latitude"),
         func.ST_X(Incident.location.cast(Geometry)).label("longitude"),
     ).filter(Incident.agent_id == agent_id).all()

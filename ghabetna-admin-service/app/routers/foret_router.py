@@ -48,6 +48,9 @@ def update_forest(forest_id: UUID, forest: ForetUpdate, db: Session = Depends(ge
 
     if not updated_forest:
         raise HTTPException(status_code=404, detail="Forest not found")
+    
+    _publish_spatial_changed(forest_id)
+
 
     return updated_forest
 
@@ -59,6 +62,8 @@ def delete_forest(forest_id: UUID, db: Session = Depends(get_db)):
 
     if not deleted_forest:
         raise HTTPException(status_code=404, detail="Forest not found")
+    
+    _publish_spatial_changed(None)
 
     return deleted_forest
 
@@ -167,3 +172,10 @@ def delete_forest(forest_id: UUID, db: Session = Depends(get_db)):
 
     return deleted
     """
+
+def _publish_spatial_changed(foret_id):
+    try:
+        r = get_redis()
+        r.publish("spatial_changed", json.dumps({"foret_id": str(foret_id) if foret_id else None}))
+    except Exception as e:
+        print(f"[Redis] spatial_changed publish failed: {e}")
