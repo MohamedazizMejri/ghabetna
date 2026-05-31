@@ -19,12 +19,15 @@ class IncidentService {
     }
   }
 
+  /// "isCritical" comes from the Critical toggle in CreateIncidentScreen.
+  /// When true, severity is sent as "true" → saved as TRUE in the incident row.
   static Future<void> createIncident({
   required String description,
   required double latitude,
   required double longitude,
   required String typeCode,
   required String imagePath,
+  required bool isCritical,
   }) async {
 
   var request = http.MultipartRequest(
@@ -38,6 +41,7 @@ class IncidentService {
   request.fields["latitude"] = latitude.toString();
   request.fields["longitude"] = longitude.toString();
   request.fields["type_code"] = typeCode;
+  request.fields["severity"] = isCritical.toString(); // "true" or "false"
 
   request.files.add(
     await http.MultipartFile.fromPath("image", imagePath),
@@ -79,6 +83,20 @@ static Future<List<dynamic>> getAllIncidents() async {
   }
 }
 
+
+/// Fetches full details for a single incident including agent name,
+/// forest, partition, GPS, photo, status, comment, created_at.
+static Future<Map<String, dynamic>> getIncidentDetails(String id) async {
+  final response = await http.get(
+    Uri.parse("$baseUrl/incidents/$id/details"),
+    headers: ApiService.headers,
+  );
+  if (response.statusCode == 200) {
+    return Map<String, dynamic>.from(jsonDecode(response.body));
+  } else {
+    throw Exception("Failed to load incident details");
+  }
+}
 
 static Future<void> updateIncidentStatus(
   String id,

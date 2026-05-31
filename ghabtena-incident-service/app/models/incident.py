@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum , Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from geoalchemy2 import Geography
@@ -28,6 +28,11 @@ class Incident(Base):
 
     status = Column(Enum(IncidentStatus), default=IncidentStatus.pending)
     comment = Column(Text)
+
+    
+    # Per-incident critical flag set by the agent's toggle at report time.
+    # True = critical, False = not critical. Independent of incident_type.severity (1-5).
+    severity = Column(Boolean, default=False, nullable=False)
 
     agent_id = Column(UUID(as_uuid=True), nullable=False)
 

@@ -46,7 +46,8 @@ def create_incident(db: Session, data,  agent_id:str):
         image_url=data.image_url,
         location=point,
         type_code=data.type_code,
-        agent_id=agent_id  # TODO: replace with JWT
+        agent_id=agent_id , # TODO: replace with JWT
+        severity=data.severity,   # per-incident critical flag from agent's toggle
     )
 
     db.add(incident)
@@ -68,7 +69,7 @@ def get_all_incidents(db: Session):
         Incident.status,
         Incident.image_url,
         Incident.type_code,
-        IncidentType.severity,
+        Incident.severity,  # boolean from incident table
         func.ST_Y(func.cast(Incident.location, Geometry)).label("latitude"),
         func.ST_X(func.cast(Incident.location, Geometry)).label("longitude"),
     ).join(
@@ -88,6 +89,7 @@ def get_all_incidents(db: Session):
             "severity": r_row.severity,
             "latitude": r_row.latitude,
             "longitude": r_row.longitude,
+            "foret_id": spatial.get("foret_id"),
             "foret_nom": spatial.get("foret_nom"),
             "parcelle_nom": spatial.get("parcelle_nom"),
         })
@@ -203,10 +205,10 @@ def get_incident_details(db: Session, incident_id) -> dict:
         Incident.type_code, Incident.status, Incident.comment,
         Incident.image_url, Incident.agent_id,
         Incident.created_at, Incident.reviewed_at,
-        IncidentType.severity,
+        Incident.severity,  # boolean from incident row
         func.ST_Y(func.cast(Incident.location, Geometry)).label("latitude"),
         func.ST_X(func.cast(Incident.location, Geometry)).label("longitude"),
-    ).join(IncidentType, Incident.type_code == IncidentType.code
+    
     ).filter(Incident.id == incident_id).first()
 
     if not row:
@@ -216,8 +218,16 @@ def get_incident_details(db: Session, incident_id) -> dict:
     spatial = {}
     if row.latitude is not None and row.longitude is not None:
         spatial = _lookup_spatial(row.latitude, row.longitude, r)
-
-
+    # ── Look up agent name from Redis profile cache ──────────────────────────
+    agent_nom = None
+    agent_prenom = None
+    if row.agent_id:
+        agent_profile_raw = r.get(f"user:{row.agent_id}:profile")
+        if agent_profile_raw:
+            agent_profile = json.loads(agent_profile_raw)
+            agent_nom = agent_profile.get("nom")
+            agent_prenom = agent_profile.get("prenom")
+        
     detail = {
         "id": str(row.id),
         "reference_code": row.reference_code,
@@ -230,6 +240,8 @@ def get_incident_details(db: Session, incident_id) -> dict:
         "latitude": row.latitude,
         "longitude": row.longitude,
         "agent_id": str(row.agent_id) if row.agent_id else None,
+        "agent_nom": agent_nom,
+        "agent_prenom": agent_prenom,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "reviewed_at": row.reviewed_at.isoformat() if row.reviewed_at else None,
         "foret_id":    spatial.get("foret_id"),

@@ -8,7 +8,7 @@ from app.services.incident_service import create_incident
 from app.schemas.incident_schema import IncidentResponse
 
 
-from typing import List
+from typing import List , Optional
 from app.services.incident_service import get_all_incidents
 from app.schemas.incident_schema import IncidentResponse
 from app.schemas.incident_schema import IncidentWithLocationResponse
@@ -79,7 +79,9 @@ def create_incident_route(
     latitude: float = Form(...),
     longitude: float = Form(...),
     type_code: str = Form(...),
-    image: UploadFile = File(...),   
+    image: UploadFile = File(...),  
+    # "true" when the agent toggled Critical ON, absent or "false" otherwise
+    severity: Optional[str] = Form(default=None), 
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -96,6 +98,8 @@ def create_incident_route(
     with open(file_path, "wb") as buffer:
         buffer.write(image.file.read())
 
+    # Convert the form string to a proper boolean
+    is_critical = severity is not None and severity.strip().lower() == "true"
 
     #  Build data (same structure as before)
     class Data:
@@ -111,7 +115,8 @@ def create_incident_route(
     incident = create_incident(
         db,
         data,
-        agent_id=current_user["user_id"]
+        agent_id=current_user["user_id"] ,
+        severity=is_critical,
     )
 
     return incident

@@ -13,6 +13,7 @@ class IncidentCreate(BaseModel):
     longitude: float
     type_code: str
     image_url: str | None = None
+    severity: bool = False
 
 
 class IncidentResponse(BaseModel):
@@ -34,9 +35,11 @@ class IncidentWithLocationResponse(BaseModel):
     status: Optional[str] = None
     image_url: Optional[str] = None
     type_code: str
-    severity: int
+    # Per-incident boolean: True = critical (agent toggled on), False = not critical
+    severity: bool
     latitude: float
     longitude: float
+    foret_id: Optional[str] = None
     foret_nom: Optional[str] = None      # 
     parcelle_nom: Optional[str] = None   # 
 
@@ -61,13 +64,16 @@ class IncidentDetailResponse(BaseModel):
     reference_code: str
     description: str
     type_code: str
-    severity: int
+    # Per-incident boolean critical flag
+    severity: bool
     status: Optional[str] = None
     comment: Optional[str] = None
     image_url: Optional[str] = None
     latitude: float
     longitude: float
     agent_id: Optional[UUID] = None
+    agent_nom: Optional[str] = None       # ← from agent's Redis profile
+    agent_prenom: Optional[str] = None    # ← from agent's Redis profile
     created_at: Optional[str] = None
     reviewed_at: Optional[str] = None
 

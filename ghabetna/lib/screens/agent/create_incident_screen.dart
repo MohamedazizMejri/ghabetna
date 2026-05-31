@@ -161,6 +161,7 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
         longitude: position!.longitude,
         typeCode: selectedType!,
         imagePath: imageFile!.path,
+        isCritical: isCritical, //  toggle value becomes severity in the DB
       );
       _snack('Incident submitted');
       await Future.delayed(const Duration(milliseconds: 600));
