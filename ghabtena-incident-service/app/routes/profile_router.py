@@ -40,9 +40,18 @@ def get_my_parcelles(current_user: dict = Depends(get_current_user)):
 
     parcelles_raw = r.get(f"user:{user_id}:parcelles")
     if not parcelles_raw:
-        return []   # No parcelles assigned yet — return empty list
-
-    return json.loads(parcelles_raw)
+        return [] #None #[]   # No parcelles assigned yet — return empty list
+    parcelles = json.loads(parcelles_raw)
+    """
+    # agent has exactly one — return the first element or None
+    return parcelles[0] if parcelles else None
+    #return json.loads(parcelles_raw)"""
+    # Always return a list — Flutter expects List<dynamic>
+    if isinstance(parcelles, list):
+        return parcelles
+    if isinstance(parcelles, dict):
+        return [parcelles]  # fix stale Redis data from old code
+    return []
 
 
 @router.get("/me/forests")

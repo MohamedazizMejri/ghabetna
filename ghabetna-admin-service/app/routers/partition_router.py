@@ -20,13 +20,16 @@ from app.utils.deps import get_db
 from app.schemas.partition_schema import (
     PartitionCreate,
     PartitionUpdate,
-    PartitionResponse
+    PartitionResponse,
+    MessageResponse
 )
 from app.services.partition_service import (
     create_partition,
     get_partitions,
     update_partition,
     delete_partition,
+    assign_agent,
+    unassign_agent
 )
 
 import redis as redis_lib
@@ -42,6 +45,18 @@ def _publish_spatial_changed(foret_id):
     except Exception as e:
         print(f"[Redis] spatial_changed publish failed: {e}")
 
+def _publish_partition_assigned(agent_id, partition_id, partition_nom):
+    try:
+        r = get_redis()
+        r.publish("partition_assigned", json.dumps({
+            "agent_id": str(agent_id),
+            "partition_id": str(partition_id),
+            "partition_nom": partition_nom,
+        }))
+    except Exception as e:
+        print(f"[Redis] partition_assigned publish failed: {e}")
+
+#---------------
 
 @router.post("/", response_model=PartitionResponse)
 def create_partition_route(partition: PartitionCreate, db: Session = Depends(get_db)):
@@ -147,7 +162,7 @@ def update_partition_route(
 
 
 
-@router.delete("/{partition_id}", response_model=PartitionResponse)
+@router.delete("/{partition_id}", response_model=MessageResponse)
 def delete_partition_route(partition_id: UUID, db: Session = Depends(get_db)):
 
     deleted = delete_partition(db, partition_id)
@@ -157,11 +172,13 @@ def delete_partition_route(partition_id: UUID, db: Session = Depends(get_db)):
     
     _publish_spatial_changed(None)
 
-    return deleted
+    return {"message": "Forest deleted"}
 
 
+# ── ASSIGN / UNASSIGN ─────────────────────────────────────────────────────────
 
-@router.put("/{partition_id}/assign-agent")
+
+"""@router.put("/{partition_id}/assign-agent")
 def assign_agent(
     partition_id: UUID,
     agent_id: UUID,
@@ -203,5 +220,31 @@ def assign_agent(
         "geom": json.loads(result.geom),
         "foret_id": result.foret_id,
         "agent_id": result.agent_id
-    }
+    }"""
+@router.put("/{partition_id}/assign-agent", response_model=PartitionResponse)
+def assign_agent_route(
+    partition_id: UUID,
+    agent_id: UUID,
+    db: Session = Depends(get_db)
+):
+    result = assign_agent(db, partition_id, agent_id)
+    _publish_partition_assigned(agent_id, partition_id, result["nom"])
+    return result
+
+
+@router.delete("/{partition_id}/unassign-agent/{agent_id}", status_code=204)
+def unassign_agent_route(
+    partition_id: UUID,
+    agent_id: UUID,
+    db: Session = Depends(get_db)
+):
+    unassign_agent(db, partition_id, agent_id)
+    try:
+        r = get_redis()
+        r.publish("partition_unassigned", json.dumps({
+            "agent_id": str(agent_id),
+            "partition_id": str(partition_id),
+        }))
+    except Exception as e:
+        print(f"[Redis] partition_unassigned publish failed: {e}")
 

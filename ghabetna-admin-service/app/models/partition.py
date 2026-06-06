@@ -24,8 +24,11 @@ class Partition(Base):
 
     foret_id = Column(UUID(as_uuid=True), ForeignKey("foret.id"))
 
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("utilisateur.id"))
+    #agent_id = Column(UUID(as_uuid=True), ForeignKey("utilisateur.id"))
 
     created_at = Column(DateTime, server_default=func.now())
 
     foret = relationship("Foret", back_populates="partitions")
+
+    # One partition → many agents (via utilisateur.partition_id)
+    agents = relationship("Utilisateur", back_populates="partition", foreign_keys="Utilisateur.partition_id")

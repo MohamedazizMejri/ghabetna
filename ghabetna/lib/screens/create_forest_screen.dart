@@ -1,508 +1,17 @@
-
-/*import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import '../services/api_service.dart';
-
-class CreateForestScreen extends StatefulWidget {
-  final Map user;
-  const CreateForestScreen({
-    super.key,
-    required this.user,
-  });
-
-  @override
-  State<CreateForestScreen> createState() => _CreateForestScreenState();
-}
-
-class _CreateForestScreenState extends State<CreateForestScreen> {
-
-  final TextEditingController nameController = TextEditingController();
-
-  List<LatLng> polygonPoints = [];
-  List<List<LatLng>> savedForests = [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadForests();
-  }
-
-  void addPoint(LatLng point) {
-    setState(() {
-      polygonPoints.add(point);
-    });
-  }
-
-  void clearPolygon() {
-    setState(() {
-      polygonPoints.clear();
-    });
-  }
-
-  void undoLastPoint() {
-    if (polygonPoints.isNotEmpty) {
-      setState(() {
-        polygonPoints.removeLast();
-      });
-    }
-  }
-
-  Map polygonToGeoJSON(List<LatLng> points) {
-
-    List coordinates =
-        points.map((p) => [p.longitude, p.latitude]).toList();
-
-    coordinates.add(
-        [points.first.longitude, points.first.latitude]);
-
-    return {
-      "type": "Polygon",
-      "coordinates": [coordinates]
-    };
-  }
-
-  Future<void> saveForest() async {
-
-    if (polygonPoints.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Draw at least 3 points"))
-      );
-      return;
-    }
-
-    Map geojson = polygonToGeoJSON(polygonPoints);
-
-    final forest = {
-      "nom": nameController.text,
-      "geom": geojson,
-      "created_by": widget.user["id"],
-      "supervised_by": "SUPERVISOR_UUID_HERE"
-    };
-
-    try {
-
-      await ApiService.createForest(forest);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Forest saved"))
-      );
-
-      Navigator.pop(context);
-
-    } catch (e) {
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error saving forest"))
-      );
-
-    }
-  }
-
-  Future<void> loadForests() async {
-
-    final forests = await ApiService.getForests();
-
-    List<List<LatLng>> loadedPolygons = [];
-
-    for (var forest in forests) {
-
-      final coords = forest["geom"]["coordinates"][0];
-
-      List<LatLng> polygon = coords.map<LatLng>((c) {
-        return LatLng(c[1], c[0]);
-      }).toList();
-
-      loadedPolygons.add(polygon);
-    }
-
-    setState(() {
-      savedForests = loadedPolygons;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Create Forest"),
-      ),
-
-      body: Column(
-        children: [
-
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Forest name",
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
-
-          Expanded(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: LatLng(36.8, 10.1),
-                initialZoom: 8,
-
-                onTap: (tapPosition, point) {
-                  addPoint(point);
-                },
-              ),
-
-              children: [
-
-                TileLayer(
-                  urlTemplate:
-                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  userAgentPackageName: "com.example.app",
-                ),
-
-                /*PolygonLayer(
-                  polygons: polygonPoints.isNotEmpty
-                      ? [
-                          Polygon(
-                            points: polygonPoints,
-                            color: Colors.green.withValues(alpha: 0.4),
-                            borderColor: Colors.green,
-                            borderStrokeWidth: 3,
-                          )
-                        ]
-                      : <Polygon>[],
-                ),*/
-                PolygonLayer(
-                  polygons: [
-
-                    // Saved forests from database
-                    ...savedForests.map((points) {
-                      return Polygon(
-                        points: points,
-                        color: Colors.blue.withValues(alpha: 0.3),
-                        borderColor: Colors.blue,
-                        borderStrokeWidth: 2,
-                      );
-                    }),
-
-                    // Forest currently being drawn
-                    if (polygonPoints.isNotEmpty)
-                      Polygon(
-                        points: polygonPoints,
-                        color: Colors.green.withValues(alpha: 0.4),
-                        borderColor: Colors.green,
-                        borderStrokeWidth: 3,
-                      ),
-                  ],
-                ),
-                MarkerLayer(
-                  markers: polygonPoints.map((p) {
-                    return Marker(
-                      point: p,
-                      width: 20,
-                      height: 20,
-                      child: const Icon(
-                        Icons.circle,
-                        size: 12,
-                        color: Colors.red,
-                      ),
-                    );
-                  }).toList(),
-                )
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.undo),
-                  label: const Text("Undo"),
-                  onPressed: undoLastPoint,
-                ),
-
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.clear),
-                  label: const Text("Clear"),
-                  onPressed: clearPolygon,
-                ),
-
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.save),
-                  label: const Text("Save"),
-                  onPressed: saveForest,
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}*/
-
-/*import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import '../services/api_service.dart';
-
-class CreateForestScreen extends StatefulWidget {
-  final Map user; // logged-in admin
-  const CreateForestScreen({super.key, required this.user});
-
-  @override
-  State<CreateForestScreen> createState() => _CreateForestScreenState();
-}
-
-class _CreateForestScreenState extends State<CreateForestScreen> {
-  final TextEditingController nameController = TextEditingController();
-
-  List<LatLng> polygonPoints = [];
-  List<List<LatLng>> savedForests = [];
-
-  List<Map<String, dynamic>> supervisors = [];
-  Map<String, dynamic>? selectedSupervisor;
-
-  @override
-  void initState() {
-    super.initState();
-    loadForests();
-    loadSupervisors();
-  }
-
-  Future<void> loadSupervisors() async {
-    try {
-      final data = await ApiService.getSupervisors();
-      setState(() {
-        supervisors = data.cast<Map<String, dynamic>>();
-        if (supervisors.isNotEmpty) {
-        selectedSupervisor = supervisors[0]; 
-      }
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load supervisors: $e")),
-      );
-    }
-  }
-
-  void addPoint(LatLng point) {
-    setState(() {
-      polygonPoints.add(point);
-    });
-  }
-
-  void clearPolygon() {
-    setState(() {
-      polygonPoints.clear();
-    });
-  }
-
-  void undoLastPoint() {
-    if (polygonPoints.isNotEmpty) {
-      setState(() {
-        polygonPoints.removeLast();
-      });
-    }
-  }
-
-  Map polygonToGeoJSON(List<LatLng> points) {
-    List coordinates = points.map((p) => [p.longitude, p.latitude]).toList();
-    coordinates.add([points.first.longitude, points.first.latitude]);
-    return {
-      "type": "Polygon",
-      "coordinates": [coordinates]
-    };
-  }
-
-  Future<void> saveForest() async {
-    if (nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a forest name")),
-      );
-      return;
-    }
-    if (polygonPoints.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Draw at least 3 points")),
-      );
-      return;
-    }
-    if (selectedSupervisor == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a supervisor")),
-      );
-      return;
-    }
-
-    Map geojson = polygonToGeoJSON(polygonPoints);
-
-    final forest = {
-      "nom": nameController.text,
-      "geom": geojson,
-      "created_by": widget.user["id"],           // Admin UUID
-      "supervised_by": selectedSupervisor!["id"] // Supervisor UUID
-    };
-
-    try {
-      await ApiService.createForest(forest);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Forest saved")),
-      );
-      Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving forest: $e")),
-      );
-    }
-  }
-
-  Future<void> loadForests() async {
-    final forests = await ApiService.getForests();
-    List<List<LatLng>> loadedPolygons = [];
-
-    for (var forest in forests) {
-      final coords = forest["geom"]["coordinates"][0];
-      List<LatLng> polygon = coords.map<LatLng>((c) {
-        return LatLng(c[1], c[0]);
-      }).toList();
-      loadedPolygons.add(polygon);
-    }
-
-    setState(() {
-      savedForests = loadedPolygons;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Create Forest")),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Forest name",
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
-
-          // Supervisor Dropdown
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: DropdownButton<Map<String, dynamic>>(
-              hint: const Text("Select Supervisor"),
-              value: selectedSupervisor,
-              isExpanded: true,
-              items: supervisors.map((sup) {
-                return DropdownMenuItem<Map<String, dynamic>>(
-                  value: sup,
-                  child: Text("${sup['prenom']} ${sup['nom']}"),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedSupervisor = value as Map<String, dynamic>?;
-                });
-              },
-            ),
-          ),
-
-          Expanded(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: LatLng(36.8, 10.1),
-                initialZoom: 8,
-                onTap: (tapPosition, point) => addPoint(point),
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  userAgentPackageName: "com.example.app",
-                ),
-
-                PolygonLayer(
-                  polygons: [
-                    // Saved forests
-                    ...savedForests.map((points) {
-                      return Polygon(
-                        points: points,
-                        color: Colors.blue.withValues(alpha: 0.3),
-                        borderColor: Colors.blue,
-                        borderStrokeWidth: 2,
-                      );
-                    }),
-                    // Currently drawn forest
-                    if (polygonPoints.isNotEmpty)
-                      Polygon(
-                        points: polygonPoints,
-                        color: Colors.green.withValues(alpha: 0.4),
-                        borderColor: Colors.green,
-                        borderStrokeWidth: 3,
-                      ),
-                  ],
-                ),
-                MarkerLayer(
-                  markers: polygonPoints.map((p) {
-                    return Marker(
-                      point: p,
-                      width: 20,
-                      height: 20,
-                      child: const Icon(Icons.circle, size: 12, color: Colors.red),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.undo),
-                  label: const Text("Undo"),
-                  onPressed: undoLastPoint,
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.clear),
-                  label: const Text("Clear"),
-                  onPressed: clearPolygon,
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.save),
-                  label: const Text("Save"),
-                  onPressed: saveForest,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}*/
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/api_service.dart';
 
+const List<String> kGouvernorats = [
+  'Ariana', 'Béja', 'Ben Arous', 'Bizerte', 'Gabès', 'Gafsa',
+  'Jendouba', 'Kairouan', 'Kasserine', 'Kébili', 'Le Kef', 'Mahdia',
+  'La Manouba', 'Médenine', 'Monastir', 'Nabeul', 'Sfax', 'Sidi Bouzid',
+  'Siliana', 'Sousse', 'Tataouine', 'Tozeur', 'Tunis', 'Zaghouan',
+];
+
 class CreateForestScreen extends StatefulWidget {
   final Map<String, dynamic> user;
-
   const CreateForestScreen({super.key, required this.user});
 
   @override
@@ -512,237 +21,311 @@ class CreateForestScreen extends StatefulWidget {
 class _CreateForestScreenState extends State<CreateForestScreen> {
   final TextEditingController nameController = TextEditingController();
 
+  // Current drawing
   List<LatLng> polygonPoints = [];
-  List<List<LatLng>> savedForests = [];
 
-  /*List<Map<String, dynamic>> supervisors = [];
-  Map<String, dynamic>? selectedSupervisor;*/
+  // Redo stack — points that were undone
+  List<LatLng> redoStack = [];
+
+  // Existing forests from DB (shown in blue so user avoids them)
+  List<Map<String, dynamic>> savedForests = [];
+
+  String? selectedRegion;
+  bool isSaving = false;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     loadForests();
-    /*loadSupervisors();*/
   }
 
-  /*// Load supervisors from API
-  Future<void> loadSupervisors() async {
-    try {
-      final data = await ApiService.getSupervisors();
-      setState(() {
-        supervisors = data.cast<Map<String, dynamic>>();
-        if (supervisors.isNotEmpty) {
-          selectedSupervisor = supervisors[0];
-        }
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load supervisors: $e")),
-      );
-    }
-  }*/
-
-
-  // Load saved forests
   Future<void> loadForests() async {
     try {
       final forests = await ApiService.getForests();
-      List<List<LatLng>> loadedPolygons = [];
-
-      for (var forest in forests) {
-        final coords = forest["geom"]["coordinates"][0];
-        List<LatLng> polygon = coords.map<LatLng>((c) {
-          return LatLng(c[1], c[0]);
-        }).toList();
-        loadedPolygons.add(polygon);
-      }
-
       setState(() {
-        savedForests = loadedPolygons;
+        savedForests = forests.cast<Map<String, dynamic>>();
+        isLoading = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load forests: $e")),
-      );
+      setState(() => isLoading = false);
+      _snack('Failed to load existing forests');
     }
   }
 
-  // Add a point to the current polygon
+  // ── Drawing controls ──────────────────────────────────────────────
+
   void addPoint(LatLng point) {
     setState(() {
       polygonPoints.add(point);
+      redoStack.clear(); // a new point invalidates the redo stack
+    });
+  }
+
+  void undoLastPoint() {
+    if (polygonPoints.isEmpty) return;
+    setState(() {
+      redoStack.add(polygonPoints.removeLast());
+    });
+  }
+
+  void redoLastPoint() {
+    if (redoStack.isEmpty) return;
+    setState(() {
+      polygonPoints.add(redoStack.removeLast());
     });
   }
 
   void clearPolygon() {
     setState(() {
+      redoStack.addAll(polygonPoints.reversed);
       polygonPoints.clear();
     });
   }
 
-  void undoLastPoint() {
-    if (polygonPoints.isNotEmpty) {
-      setState(() {
-        polygonPoints.removeLast();
-      });
-    }
-  }
+  // ── GeoJSON helper ────────────────────────────────────────────────
 
-  // Convert LatLng polygon to GeoJSON
   Map<String, dynamic> polygonToGeoJSON(List<LatLng> points) {
-    List<List<double>> coordinates =
-        points.map((p) => [p.longitude, p.latitude]).toList();
-    // Close polygon
-    coordinates.add([points.first.longitude, points.first.latitude]);
-    return {"type": "Polygon", "coordinates": [coordinates]};
+    final coords = points.map((p) => [p.longitude, p.latitude]).toList();
+    coords.add([points.first.longitude, points.first.latitude]); // close ring
+    return {'type': 'Polygon', 'coordinates': [coords]};
   }
 
-  // Save forest to backend
+  // ── Save ──────────────────────────────────────────────────────────
+
   Future<void> saveForest() async {
-    if (polygonPoints.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Draw at least 3 points")),
-      );
+    if (nameController.text.trim().isEmpty) {
+      _snack('Please enter a forest name');
       return;
     }
-    /*if (selectedSupervisor == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Select a supervisor")),
-      );
+    if (selectedRegion == null) {
+      _snack('Please select a region');
       return;
-    }*/
+    }
+    if (polygonPoints.length < 3) {
+      _snack('Draw at least 3 points on the map');
+      return;
+    }
+
+    setState(() => isSaving = true);
 
     final forestData = {
-      "nom": nameController.text.isEmpty ? "Forest" : nameController.text,
-      "geom": polygonToGeoJSON(polygonPoints),
-      "created_by": widget.user["id"],
-      "supervised_by":null, /*selectedSupervisor!["id"],*/
+      'nom': nameController.text.trim(),
+      'geom': polygonToGeoJSON(polygonPoints),
+      'region': selectedRegion,
+      'created_by': widget.user['id'],
+      'supervised_by': null,
     };
 
     try {
       await ApiService.createForest(forestData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Forest saved successfully")),
-      );
-      Navigator.pop(context);
+      if (!mounted) return;
+      _snack('Forest saved successfully', success: true);
+      Navigator.pop(context, true); // true = reload forests list
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error saving forest")),
-      );
+      _snack('Error saving forest');
+    } finally {
+      if (mounted) setState(() => isSaving = false);
     }
   }
+
+  void _snack(String msg, {bool success = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: success ? Colors.green : null,
+    ));
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Forest")),
+      appBar: AppBar(title: const Text('Create Forest')),
       body: Column(
         children: [
+          // ── Name + Region row ──────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Forest name",
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
-          // Supervisor dropdown
-          /*Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: supervisors.isEmpty
-                ? const CircularProgressIndicator()
-                : DropdownButton<Map<String, dynamic>>(
-                    isExpanded: true,
-                    value: selectedSupervisor,
-                    items: supervisors.map((supervisor) {
-                      return DropdownMenuItem<Map<String, dynamic>>(
-                        value: supervisor,
-                        child: Text(supervisor["nom"]),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedSupervisor = value as Map<String, dynamic>?;
-                      });
-                    },
-                  ),
-          ),*/
-          const SizedBox(height: 10),
-          Expanded(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: LatLng(36.8, 10.1),
-                initialZoom: 8,
-                onTap: (tapPos, point) {
-                  addPoint(point);
-                },
-              ),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: Row(
               children: [
-                TileLayer(
-                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  userAgentPackageName: "com.example.app",
+                // Forest name
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Forest name',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
                 ),
-                PolygonLayer(
-                  polygons: [
-                    ...savedForests.map((points) => Polygon(
-                          points: points,
-                          color: Colors.blue.withValues(alpha: 0.3),
-                          borderColor: Colors.blue,
-                          borderStrokeWidth: 2,
-                        )),
-                    if (polygonPoints.isNotEmpty)
-                      Polygon(
-                        points: polygonPoints,
-                        color: Colors.green.withValues(alpha: 0.4),
-                        borderColor: Colors.green,
-                        borderStrokeWidth: 3,
-                      ),
-                  ],
-                ),
-                MarkerLayer(
-                  markers: polygonPoints.map((p) {
-                    return Marker(
-                      point: p,
-                      width: 20,
-                      height: 20,
-                      child: const Icon(
-                        Icons.circle,
-                        size: 12,
-                        color: Colors.red,
-                      ),
-                    );
-                  }).toList(),
+                const SizedBox(width: 10),
+                // Region dropdown
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    value: selectedRegion,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Region',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: kGouvernorats
+                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedRegion = v),
+                  ),
                 ),
               ],
             ),
           ),
+
+          const SizedBox(height: 8),
+
+          // ── Map ───────────────────────────────────────────────
+          Expanded(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : FlutterMap(
+                    options: MapOptions(
+                      initialCenter: const LatLng(33.8, 9.5), // center of Tunisia
+                      initialZoom: 7,
+                      onTap: (_, point) => addPoint(point),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.app',
+                      ),
+
+                      PolygonLayer(
+                        polygons: [
+                          // Existing forests — blue, non-interactive visual barrier
+                          ...savedForests.map((f) {
+                            final coords = f['geom']['coordinates'][0] as List;
+                            final points = coords
+                                .map<LatLng>((c) => LatLng(c[1], c[0]))
+                                .toList();
+                            return Polygon(
+                              points: points,
+                              color: Colors.blue.withValues(alpha: 0.25),
+                              borderColor: Colors.blue,
+                              borderStrokeWidth: 2,
+                            );
+                          }),
+
+                          // Currently being drawn — green
+                          if (polygonPoints.length >= 2)
+                            Polygon(
+                              points: polygonPoints,
+                              color: Colors.green.withValues(alpha: 0.35),
+                              borderColor: Colors.green,
+                              borderStrokeWidth: 3,
+                            ),
+                        ],
+                      ),
+
+                      // Red dots for each tapped point
+                      MarkerLayer(
+                        markers: polygonPoints
+                            .map((p) => Marker(
+                                  point: p,
+                                  width: 16,
+                                  height: 16,
+                                  child: const Icon(Icons.circle,
+                                      size: 10, color: Colors.red),
+                                ))
+                            .toList(),
+                      ),
+                    ],
+                  ),
+          ),
+
+          // ── Legend ────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                _legendDot(Colors.blue),
+                const SizedBox(width: 4),
+                const Text('Existing forest', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 16),
+                _legendDot(Colors.green),
+                const SizedBox(width: 4),
+                const Text('New forest', style: TextStyle(fontSize: 12)),
+                const Spacer(),
+                Text(
+                  '${polygonPoints.length} point${polygonPoints.length == 1 ? '' : 's'}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Controls ──────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.undo),
-                  label: const Text("Undo"),
-                  onPressed: undoLastPoint,
+                _controlButton(
+                  icon: Icons.undo,
+                  label: 'Undo',
+                  onPressed: polygonPoints.isNotEmpty ? undoLastPoint : null,
                 ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.clear),
-                  label: const Text("Clear"),
-                  onPressed: clearPolygon,
+                _controlButton(
+                  icon: Icons.redo,
+                  label: 'Redo',
+                  onPressed: redoStack.isNotEmpty ? redoLastPoint : null,
                 ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.save),
-                  label: const Text("Save"),
-                  onPressed: saveForest,
+                _controlButton(
+                  icon: Icons.delete_outline,
+                  label: 'Clear',
+                  onPressed: polygonPoints.isNotEmpty ? clearPolygon : null,
+                  color: Colors.red,
+                ),
+                _controlButton(
+                  icon: Icons.save,
+                  label: isSaving ? 'Saving…' : 'Save',
+                  onPressed: isSaving ? null : saveForest,
+                  color: Colors.green,
                 ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _legendDot(Color color) => Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.4),
+          border: Border.all(color: color, width: 1.5),
+          shape: BoxShape.circle,
+        ),
+      );
+
+  Widget _controlButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+    Color? color,
+  }) {
+    return ElevatedButton.icon(
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: color,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      onPressed: onPressed,
     );
   }
 }

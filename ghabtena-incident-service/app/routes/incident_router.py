@@ -111,12 +111,13 @@ def create_incident_route(
     data.longitude = longitude
     data.type_code = type_code
     data.image_url = f"/uploads/{filename}"
+    data.severity = is_critical
 
     incident = create_incident(
         db,
         data,
         agent_id=current_user["user_id"] ,
-        severity=is_critical,
+        
     )
 
     return incident

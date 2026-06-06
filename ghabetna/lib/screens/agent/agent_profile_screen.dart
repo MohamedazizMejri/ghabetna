@@ -42,29 +42,48 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
+    if (!mounted) return;
     setState(() => isLoading = true);
+
+    final id = (widget.user['id'] ??
+        widget.user['user_id'] ??
+        ApiService.userId) as String?;
+
+    print('[Profile] user map: ${widget.user}');
+    print('[Profile] resolved id: $id');
+    print('[Profile] token: ${ApiService.token}');
+    print('[Profile] baseUrl: ${ApiService.baseUrl}');
+
     try {
-      final p = await ApiService.getMyProfile();
-      final parc = await ApiService.getMyParcelles();
-      setState(() {
-        profile = p;
-        parcelles = parc;
-        _phoneController.text = p['numtel'] ?? '';
-      });
-    } catch (e) {
-      if (e.toString().contains('PROFILE_NOT_CACHED')) {
-        final id = (widget.user['id'] ??
-            widget.user['user_id'] ??
-            ApiService.userId) as String?;
-        if (id != null) {
-          await ApiService.syncUserCache(id);
-          await _loadProfile();
-          return;
-        }
+      if (id != null) {
+        print('[Profile] calling syncUserCache($id)...');
+        await ApiService.syncUserCache(id);
+        print('[Profile] syncUserCache done');
+      } else {
+        print('[Profile] ERROR: id is null, cannot sync');
       }
-      _snack('Could not load profile', isError: true);
-    } finally {
-      if (mounted) setState(() => isLoading = false);
+
+      print('[Profile] calling getMyProfile...');
+      final p = await ApiService.getMyProfile();
+      print('[Profile] getMyProfile success: $p');
+
+      final parc = await ApiService.getMyParcelles();
+
+      if (mounted) {
+        setState(() {
+          profile = p;
+          parcelles = parc;
+          _phoneController.text = p['numtel'] ?? '';
+          isLoading = false;
+        });
+      }
+    } catch (e, stack) {
+      print('[Profile] ERROR: $e');
+      print('[Profile] STACK: $stack');
+      if (mounted) {
+        setState(() => isLoading = false);
+        _snack('Could not load profile', isError: true);
+      }
     }
   }
 

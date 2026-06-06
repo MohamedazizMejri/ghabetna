@@ -279,13 +279,28 @@ static Future<Map<String, dynamic>> getMyProfile() async {
   }
 }
 
-static Future<List<dynamic>> getMyParcelles() async {
+/*static Future<List<dynamic>> getMyParcelles() async {
   final response = await http.get(
     Uri.parse("$baseUrl/profile/me/parcelles"),
     headers: headers,
   );
   if (response.statusCode == 200) {
     return jsonDecode(response.body);
+  }
+  return [];
+}*/
+static Future<List<dynamic>> getMyParcelles() async {
+  final response = await http.get(
+    Uri.parse("$baseUrl/profile/me/parcelles"),
+    headers: headers,
+  );
+  if (response.statusCode == 200) {
+    final decoded = jsonDecode(response.body);
+    // backend might return a single object {} instead of a list []
+    if (decoded is List) return decoded;
+    if (decoded is Map) return [decoded];
+    if (decoded == null) return [];
+    return [];
   }
   return [];
 }
@@ -312,7 +327,7 @@ static Future<void> updateMyProfile(Map<String, dynamic> data) async {
   }
 }
 
-static Future<void> syncUserCache(String userId) async {
+/*static Future<void> syncUserCache(String userId) async {
   // Asks admin-service to write the user to Redis cache
   final response = await http.get(
     Uri.parse("$baseUrl/users/$userId/cache-sync"),
@@ -321,7 +336,81 @@ static Future<void> syncUserCache(String userId) async {
   if (response.statusCode != 200) {
     print("Cache sync failed: ${response.body}");
   }
+}*/
+static Future<void> syncUserCache(String userId) async {
+  final response = await http.get(
+    Uri.parse("$baseUrl/users/$userId/cache-sync"),
+    headers: headers,
+  );
+  print('[syncUserCache] status: ${response.statusCode} body: ${response.body}');
+  if (response.statusCode != 200) {
+    throw Exception("Cache sync failed: ${response.statusCode} ${response.body}");
+  }
 }
 
+static Future<void> updateForest(String id, Map<String, dynamic> data) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/forests/$id'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(data),
+  );
+ 
+  if (response.statusCode != 200) {
+    print(response.body);
+    throw Exception('Failed to update forest');
+  }
+}
+ 
+static Future<void> deleteForest(String id) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/forests/$id'),
+    headers: headers,
+  );
+ 
+  if (response.statusCode != 200 && response.statusCode != 204) {
+    print(response.body);
+    throw Exception('Failed to delete forest');
+  }
+}
+
+
+static Future<void> updatePartition(String id, Map<String, dynamic> data) async {
+  final response = await http.patch(
+    Uri.parse('$baseUrl/partitions/$id'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(data),
+  );
+  if (response.statusCode != 200) {
+    throw Exception('Failed to update partition: ${response.body}');
+  }
+}
+ 
+static Future<void> deletePartition(String id) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/partitions/$id'),
+    headers: headers,
+  );
+  if (response.statusCode != 200 && response.statusCode != 204) {
+    throw Exception('Failed to delete partition: ${response.body}');
+  }
+}
+
+
+static Future<void> unassignAgent(String partitionId, String agentId) async {
+  final response = await http.delete(
+    Uri.parse("$baseUrl/partitions/$partitionId/unassign-agent/$agentId"),
+  );
+  if (response.statusCode != 204) throw Exception('Failed to unassign agent');
+}
+
+static Future<void> unassignSupervisor(String forestId) async {
+  final response = await http.delete(
+    Uri.parse("$baseUrl/forests/$forestId/unassign-supervisor"),
+    headers: headers,
+  );
+  if (response.statusCode != 204) {
+    throw Exception("Failed to unassign supervisor");
+  }
+}
 
 }

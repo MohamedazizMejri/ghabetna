@@ -25,6 +25,12 @@ class Utilisateur(Base):
 
     role_id = Column(UUID(as_uuid=True), ForeignKey("role.id"))
 
+    # agent belongs to ONE partition (nullable — not all users are agents)
+
+    partition_id = Column(UUID(as_uuid=True), ForeignKey("partition.id", ondelete="SET NULL"), nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
 
     role = relationship("Role", back_populates="utilisateurs")
+
+    partition = relationship("Partition", back_populates="agents", foreign_keys=[partition_id])

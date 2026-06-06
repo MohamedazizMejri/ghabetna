@@ -18,7 +18,7 @@ from uuid import UUID
 from app.models.foret import Foret
 
 from app.utils.deps import get_db
-from app.schemas.foret_schema import ForetCreate, ForetResponse ,ForetUpdate
+from app.schemas.foret_schema import ForetCreate, ForetResponse ,ForetUpdate ,MessageResponse
 from app.services import foret_service
 from sqlalchemy import func
 import json
@@ -55,7 +55,7 @@ def update_forest(forest_id: UUID, forest: ForetUpdate, db: Session = Depends(ge
     return updated_forest
 
 
-@router.delete("/{forest_id}", response_model=ForetResponse)
+@router.delete("/{forest_id}", response_model=MessageResponse)
 def delete_forest(forest_id: UUID, db: Session = Depends(get_db)):
 
     deleted_forest = foret_service.delete_forest(db, str(forest_id))
@@ -65,7 +65,7 @@ def delete_forest(forest_id: UUID, db: Session = Depends(get_db)):
     
     _publish_spatial_changed(None)
 
-    return deleted_forest
+    return {"message": "Forest deleted"}
 
 @router.put("/{forest_id}", response_model=ForetResponse)
 def update_forest(
@@ -179,3 +179,27 @@ def _publish_spatial_changed(foret_id):
         r.publish("spatial_changed", json.dumps({"foret_id": str(foret_id) if foret_id else None}))
     except Exception as e:
         print(f"[Redis] spatial_changed publish failed: {e}")
+
+
+@router.delete("/{forest_id}/unassign-supervisor", status_code=204)
+def unassign_supervisor_route(
+    forest_id: UUID,
+    db: Session = Depends(get_db)
+):
+    forest = db.query(Foret).filter(Foret.id == forest_id).first()
+    if not forest:
+        raise HTTPException(status_code=404, detail="Forest not found")
+
+    supervisor_id = str(forest.supervised_by) if forest.supervised_by else None
+    forest.supervised_by = None
+    db.commit()
+
+    if supervisor_id:
+        try:
+            r = get_redis()
+            r.publish("forest_unassigned", json.dumps({
+                "supervisor_id": supervisor_id,
+                "forest_id": str(forest_id),
+            }))
+        except Exception as e:
+            print(f"[Redis] forest_unassigned publish failed: {e}")

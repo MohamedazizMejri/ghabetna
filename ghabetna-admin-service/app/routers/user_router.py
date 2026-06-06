@@ -12,6 +12,9 @@ from app.services import user_service
 from app.core.redis_client import get_redis
 import json
 
+from app.models.utilisateur import Utilisateur as UtilisateurModel
+
+
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
@@ -94,8 +97,15 @@ def sync_user_to_cache(user_id: str, db: Session = Depends(get_db)):
 
     # Write parcelles (if agent)
     if user.role and user.role.type_role == "agent":
-        parcelles = db.query(Partition).filter(Partition.agent_id == user_id).all()
+        """parcelles = db.query(Partition).filter(Partition.agent_id == user_id).all()
         parcelles_data = [{"partition_id": str(p.id), "partition_nom": p.nom} for p in parcelles]
+        r.setex(f"user:{user_id}:parcelles", 86400, json.dumps(parcelles_data))"""
+        # The agent object itself has partition_id
+        parcelles_data = []
+        if user.partition_id:
+            partition = db.query(Partition).filter(Partition.id == user.partition_id).first()
+            if partition:
+                parcelles_data = [{"partition_id": str(partition.id), "partition_nom": partition.nom}]
         r.setex(f"user:{user_id}:parcelles", 86400, json.dumps(parcelles_data))
 
     # Write forests (if supervisor)

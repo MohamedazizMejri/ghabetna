@@ -272,7 +272,54 @@ from fastapi import HTTPException
 
 from app.models.partition import Partition
 from app.models.foret import Foret
+from app.models.utilisateur import Utilisateur
 from app.schemas.partition_schema import PartitionCreate, PartitionUpdate
+
+def _compute_km2(db: Session, geom_json: dict) -> float:
+    """Calculate area in km² using PostGIS ST_Area on geography cast."""
+    result = db.execute(
+        func.ST_Area(
+            func.ST_GeogFromWKB(
+                func.ST_AsEWKB(
+                    func.ST_SetSRID(
+                        func.ST_GeomFromGeoJSON(json.dumps(geom_json)), 4326
+                    )
+                )
+            )
+        )
+    ).scalar()
+    return round(result / 1_000_000, 6) if result else 0.0
+ 
+ 
+def _partition_to_dict(db: Session, partition_id) -> dict:
+    """Fetch a partition and include its agents list."""
+    row = db.query(
+        Partition.id,
+        Partition.nom,
+        Partition.superficie,
+        func.ST_AsGeoJSON(Partition.geom).label("geom"),
+        Partition.foret_id,
+    ).filter(Partition.id == partition_id).first()
+
+    if not row:
+        return None
+
+    agents = db.query(Utilisateur).filter(
+        Utilisateur.partition_id == partition_id
+    ).all()
+
+    return {
+        "id": row.id,
+        "nom": row.nom,
+        "superficie": row.superficie,
+        "geom": json.loads(row.geom),
+        "foret_id": row.foret_id,
+        "agents": [
+            {"id": a.id, "nom": a.nom, "prenom": a.prenom, "email": a.email}
+            for a in agents
+        ],
+    }
+
 
 
 #  CREATE PARTITION
@@ -310,14 +357,15 @@ def create_partition(db: Session, partition: PartitionCreate):
             status_code=400,
             detail="Partition must be inside the forest"
         )
-
+    # Auto-calculate superficie in km²
+    superficie_km2 = _compute_km2(db, partition.geom)
     # Create partition
     new_partition = Partition(
         nom=partition.nom,
-        superficie=partition.superficie,
+        superficie=superficie_km2,
         geom=partition_geom,
         foret_id=partition.foret_id,
-        agent_id=partition.agent_id
+        #agent_id=partition.agent_id
     )
 
     db.add(new_partition)
@@ -331,7 +379,7 @@ def create_partition(db: Session, partition: PartitionCreate):
         Partition.superficie,
         func.ST_AsGeoJSON(Partition.geom).label("geom"),
         Partition.foret_id,
-        Partition.agent_id
+        #Partition.agent_id
     ).filter(Partition.id == new_partition.id).first()
 
     return {
@@ -340,7 +388,7 @@ def create_partition(db: Session, partition: PartitionCreate):
         "superficie": result.superficie,
         "geom": json.loads(result.geom),
         "foret_id": result.foret_id,
-        "agent_id": result.agent_id
+        #"agent_id": result.agent_id
     }
 
 
@@ -353,12 +401,12 @@ def get_partitions(db: Session):
         Partition.superficie,
         func.ST_AsGeoJSON(Partition.geom).label("geom"),
         Partition.foret_id,
-        Partition.agent_id
+        #Partition.agent_id
     ).all()
 
     result = []
 
-    for p in partitions:
+    """for p in partitions:
         result.append({
             "id": p.id,
             "nom": p.nom,
@@ -366,6 +414,21 @@ def get_partitions(db: Session):
             "geom": json.loads(p.geom),
             "foret_id": p.foret_id,
             "agent_id": p.agent_id
+        })"""
+    for row in partitions:
+        agents = db.query(Utilisateur).filter(
+            Utilisateur.partition_id == row.id
+        ).all()
+        result.append({
+            "id": row.id,
+            "nom": row.nom,
+            "superficie": row.superficie,
+            "geom": json.loads(row.geom),
+            "foret_id": row.foret_id,
+            "agents": [
+                {"id": a.id, "nom": a.nom, "prenom": a.prenom, "email": a.email}
+                for a in agents
+            ],
         })
 
     return result
@@ -385,6 +448,8 @@ def update_partition(db: Session, partition_id: UUID, partition_update: Partitio
         partition.geom = func.ST_SetSRID(
             func.ST_GeomFromGeoJSON(json.dumps(update_data["geom"])), 4326
         )
+        # Recalculate superficie when geometry changes
+        partition.superficie = _compute_km2(db, update_data["geom"])
         del update_data["geom"]
 
     for field, value in update_data.items():
@@ -400,7 +465,7 @@ def update_partition(db: Session, partition_id: UUID, partition_update: Partitio
         Partition.superficie,
         func.ST_AsGeoJSON(Partition.geom).label("geom"),
         Partition.foret_id,
-        Partition.agent_id
+        #Partition.agent_id
     ).filter(Partition.id == partition.id).first()
 
     return {
@@ -409,7 +474,7 @@ def update_partition(db: Session, partition_id: UUID, partition_update: Partitio
         "superficie": result.superficie,
         "geom": json.loads(result.geom),
         "foret_id": result.foret_id,
-        "agent_id": result.agent_id
+        #"agent_id": result.agent_id
     }
 
 
@@ -420,8 +485,51 @@ def delete_partition(db: Session, partition_id: UUID):
 
     if not partition:
         return None
+    
+    # Unassign all agents from this partition before deleting
+    db.query(Utilisateur).filter(
+        Utilisateur.partition_id == partition_id
+    ).update({"partition_id": None})
 
     db.delete(partition)
     db.commit()
 
     return {"message": "Partition deleted"}
+
+# ── ASSIGN / UNASSIGN AGENT ───────────────────────────────────────────────────
+
+def assign_agent(db: Session, partition_id: UUID, agent_id: UUID) -> dict:
+    partition = db.query(Partition).filter(Partition.id == partition_id).first()
+    if not partition:
+        raise HTTPException(status_code=404, detail="Partition not found")
+
+    agent = db.query(Utilisateur).filter(Utilisateur.id == agent_id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Enforce: agent can only belong to one partition at a time
+    """if agent.partition_id and str(agent.partition_id) != str(partition_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Agent is already assigned to another partition"
+        )"""
+
+    agent.partition_id = partition_id
+    db.commit()
+
+    return _partition_to_dict(db, partition_id)
+
+
+def unassign_agent(db: Session, partition_id: UUID, agent_id: UUID) -> dict:
+    agent = db.query(Utilisateur).filter(
+        Utilisateur.id == agent_id,
+        Utilisateur.partition_id == partition_id
+    ).first()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found in this partition")
+
+    agent.partition_id = None
+    db.commit()
+
+    return _partition_to_dict(db, partition_id)

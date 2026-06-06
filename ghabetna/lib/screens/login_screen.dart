@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       String role = user["role"];
       if (!mounted) return;
 
-      if (role == "admin") {
+      /*if (role == "admin") {
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (_) => DashboardScreen(user: user)));
       } else if (role == "superviseur") {
@@ -45,7 +45,14 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (_) => SupervisorScreen(user: user)));
       } else if (role == "agent") {
         Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => AgentScreen(user: user)));
+            MaterialPageRoute(builder: (_) => AgentScreen(user: user)));*/
+      if (role == "admin") {
+        Navigator.pushReplacementNamed(context, '/admin', arguments: user);
+      } else if (role == "superviseur") {
+        Navigator.pushReplacementNamed(context, '/supervisor', arguments: user);
+      } else if (role == "agent") {
+        Navigator.pushReplacementNamed(context, '/agent', arguments: user);
+      
       } else {
         _showError("Unknown role. Please contact your administrator.");
       }

@@ -4,7 +4,44 @@ from app.schemas.foret_schema import ForetCreate , ForetUpdate
 import json
 from sqlalchemy import func
 
+def _compute_km2(db: Session, geom_json: dict) -> float:
+    result = db.execute(
+        func.ST_Area(
+            func.ST_GeogFromWKB(
+                func.ST_AsEWKB(
+                    func.ST_SetSRID(
+                        func.ST_GeomFromGeoJSON(json.dumps(geom_json)), 4326
+                    )
+                )
+            )
+        )
+    ).scalar()
+    return round(result / 1_000_000, 6) if result else None
 
+def _query_forest(db: Session, forest_id):
+    return db.query(
+        Foret.id,
+        Foret.nom,
+        func.ST_AsGeoJSON(Foret.geom).label("geom"),
+        func.ST_AsGeoJSON(Foret.location).label("location"),
+        Foret.superficie_km2,
+        Foret.region,
+        Foret.created_by,
+        Foret.supervised_by,
+    ).filter(Foret.id == forest_id).first()
+ 
+ 
+def _row_to_dict(result) -> dict:
+    return {
+        "id": result.id,
+        "nom": result.nom,
+        "geom": json.loads(result.geom),
+        "location": json.loads(result.location) if result.location else None,
+        "superficie_km2": result.superficie_km2,
+        "region": result.region,
+        "created_by": result.created_by,
+        "supervised_by": result.supervised_by,
+    }
 
 def create_forest(db: Session, forest: ForetCreate):
 
@@ -16,6 +53,8 @@ def create_forest(db: Session, forest: ForetCreate):
         location=func.ST_SetSRID(
             func.ST_GeomFromGeoJSON(json.dumps(forest.location)), 4326
         ) if forest.location else None,
+        superficie_km2=_compute_km2(db, forest.geom),
+        region=forest.region,
         created_by=forest.created_by,
         supervised_by=forest.supervised_by
     )
@@ -24,23 +63,7 @@ def create_forest(db: Session, forest: ForetCreate):
     db.commit()
     db.refresh(new_forest)
 
-    result = db.query(
-        Foret.id,
-        Foret.nom,
-        func.ST_AsGeoJSON(Foret.geom).label("geom"),
-        func.ST_AsGeoJSON(Foret.location).label("location"),
-        Foret.created_by,
-        Foret.supervised_by
-    ).filter(Foret.id == new_forest.id).first()
-
-    return {
-        "id": result.id,
-        "nom": result.nom,
-        "geom": json.loads(result.geom),
-        "location": json.loads(result.location) if result.location else None,
-        "created_by": result.created_by,
-        "supervised_by": result.supervised_by
-    }
+    return _row_to_dict(_query_forest(db, new_forest.id))
 
 
 def get_forests(db: Session):
@@ -51,25 +74,14 @@ def get_forests(db: Session):
             Foret.nom,
             func.ST_AsGeoJSON(Foret.geom).label("geom"),
             func.ST_AsGeoJSON(Foret.location).label("location"),
+            Foret.superficie_km2, Foret.region,
             Foret.created_by,
             Foret.supervised_by
         )
         .all()
     )
 
-    result = []
-
-    for f in forests:
-        result.append({
-            "id": f.id,
-            "nom": f.nom,
-            "geom": json.loads(f.geom),
-            "location": json.loads(f.location) if f.location else None,
-            "created_by": f.created_by,
-            "supervised_by": f.supervised_by
-        })
-
-    return result
+    return [_row_to_dict(f) for f in forests]
 
 
 def update_forest(db: Session, forest_id: str, forest_update: ForetUpdate):
@@ -85,6 +97,7 @@ def update_forest(db: Session, forest_id: str, forest_update: ForetUpdate):
         forest.geom = func.ST_SetSRID(
             func.ST_GeomFromGeoJSON(json.dumps(update_data["geom"])), 4326
         )
+        forest.superficie_km2 = _compute_km2(db, update_data["geom"])
         del update_data["geom"]
 
     if "location" in update_data and update_data["location"]:
@@ -98,25 +111,7 @@ def update_forest(db: Session, forest_id: str, forest_update: ForetUpdate):
 
     db.commit()
     db.refresh(forest)
-
-    result = db.query(
-        Foret.id,
-        Foret.nom,
-        func.ST_AsGeoJSON(Foret.geom).label("geom"),
-        func.ST_AsGeoJSON(Foret.location).label("location"),
-        Foret.created_by,
-        Foret.supervised_by
-    ).filter(Foret.id == forest.id).first()
-
-    return {
-        "id": result.id,
-        "nom": result.nom,
-        "geom": json.loads(result.geom),
-        "location": json.loads(result.location) if result.location else None,
-        "created_by": result.created_by,
-        "supervised_by": result.supervised_by
-    }
-
+    return _row_to_dict(_query_forest(db, forest.id))
 
 def delete_forest(db: Session, forest_id: str):
 
@@ -157,3 +152,4 @@ def assign_supervisor(db: Session, forest_id: str, supervisor_id: str):
     "created_by": result.created_by,
     "supervised_by": result.supervised_by
      }
+
